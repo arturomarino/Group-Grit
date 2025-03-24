@@ -1,0 +1,44 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "group-grit-app",
+          "appId": "1:255103648172:android:15a76a123b656e4092fa09",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "group-grit-app",
+          "appId": "1:255103648172:ios:660e6a0af068933c92fa09",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "group-grit-app",
+          "configurations": {
+            "android": "1:255103648172:android:15a76a123b656e4092fa09",
+            "ios": "1:255103648172:ios:660e6a0af068933c92fa09",
+            "web": "1:255103648172:web:b329c63b5318fd0192fa09"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "venv",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}

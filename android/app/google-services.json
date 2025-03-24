@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "255103648172",
+    "project_id": "group-grit-app",
+    "storage_bucket": "group-grit-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:255103648172:android:72f0e8a505895f4392fa09",
+        "android_client_info": {
+          "package_name": "com.example.group_grit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "255103648172-bmctc5ch600ka2dg298gf93ievbacse3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5A1lAnZm8n-niDHT4HsPGbHTWfCIS48s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "255103648172-bmctc5ch600ka2dg298gf93ievbacse3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "255103648172-um3g33ujcp0c98389l3egii16l1q65b2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.groupGrit"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

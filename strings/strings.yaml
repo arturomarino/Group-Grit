@@ -1,0 +1,97 @@
+
+utils:
+  components:
+    VideoWidget:
+      text2: Nessun video selezionato.
+      text6: title
+      text7: Video on Gallery
+      text8: description
+      text9: Video uploaded from gallery
+      text13: Authorization
+      text16: "Video uploaded successfully!"
+      text20: Upload video on api.video
+      text21: No video selected
+      text22: Select Video
+      text23: Upload Video
+      text24: "Video uploaded successfully!"
+    drawer:
+      text1: Group Grit
+      text2: Update Profile Picture
+      text3: Language
+      text4: Invite friends to App
+      text5: Logout
+  functions:
+    auth_service:
+      text1: Something went wrong
+      text3: The password provided is too weak.
+      text5: An account already exists with that email.
+      text7: Email address is invalid
+      text8: User disabled, contact support.
+      text9: The email address does not exist, sign up
+      text10: Network error, check your internet connection
+      text14: Check email or password and try again
+    upload_service:
+      text6: Il tuo titolo video
+      text8: Descrizione del video
+      text16: "Video caricato con successo!"
+      text17: Errore durante il caricamento del video.
+main:
+  text1: Group Grit
+pages:
+  HomePage:
+    text1: users
+    text3: Home Page
+    text4: "Welcome!"
+    text6: New Group
+    text7: Join Group
+    text8: Update Video
+  Groups:
+    CreateGroupPage:
+      text4: Create Group
+      text5: Group Name
+      text6: Please enter a group name
+      text7: Group Description
+      text8: Please enter a group description
+      text15: Group created successfully
+      text16: Create Group
+    JoinGroupPage:
+      text3: Join Group
+      text4: Group Code
+      text6: Join Group
+  Authentication:
+    ForgotPasswordPage:
+      text1: Forgot Password
+      text2: Enter your email address to reset your password
+      text3: Email
+      text4: "Reset email sent!"
+      text5: Send reset email
+    UsernamePage:
+      text3: "SignUp Complete!"
+      text4: "Before you get started, let's create your username"
+      text5: Choose Your Username
+      text6: Type your username here
+      text7: "Invalid username, at least 6 characters"
+      text8: Username is unavailable
+      text11: Username updated
+      text12: Continue
+    SignUpPage:
+      text3: SignUp to FitTrack
+      text4: Enter your full name
+      text5: Enter your email
+      text6: Create a password
+      text7: Confirm your password
+      text8: Please fill all fields
+      text9: Passwords do not match
+      text17: SignUp
+      text18: Or continue with
+      text26: "Don't have an account?"
+      text27: Sign In
+    LoginPage:
+      text3: Login to FitTrack
+      text4: Enter your email
+      text5: Enter your password
+      text6: "Forgot Password?"
+      text7: Login
+      text8: Or continue with
+      text16: "Don't have an account?"
+      text17: Sign up
