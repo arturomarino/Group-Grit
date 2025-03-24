@@ -227,7 +227,7 @@ class SupportModal extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: GGSize.screenWidth(context),
-      height: GGSize.screenHeight(context) * 0.2,
+      height: GGSize.screenHeight(context) * 0.4,
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: GGColors.backgroundColor,
@@ -243,8 +243,8 @@ class SupportModal extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: GGSize.screenWidth(context) * 0.2,
-                height: 5,
+                width: GGSize.screenWidth(context) * 0.3,
+                height: 4,
                 decoration: BoxDecoration(
                   color: const Color.fromARGB(255, 198, 196, 196),
                   borderRadius: BorderRadius.circular(5),
@@ -253,7 +253,7 @@ class SupportModal extends StatelessWidget {
               )
             ],
           ),
-          SizedBox(height: 10),
+           SizedBox(height: GGSize.screenHeight(context) * 0.025),
           Text('Live Chat Support coming soon...', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           SizedBox(height: 10),
           Row(
@@ -279,6 +279,25 @@ class SupportModal extends StatelessWidget {
               
             ],
           ),
+            SizedBox(height: GGSize.screenHeight(context) * 0.05),
+            Center(
+            child: Column(
+              children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Image.asset(
+                'assets/images/logoIcon.jpg',
+                width: GGSize.screenWidth(context) * 0.24,
+                ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Version 1.0.0',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black),
+              ),
+              ],
+            ),
+            ),
           
         ],
       ),
