@@ -215,7 +215,7 @@ class _HomePageState extends State<HomePage> {
                       width: GGSize.screenWidth(context) * 0.35,
                     ),
                     //Text("GroupGrit", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: GGColors.primaryColor)),
-                    SizedBox(width: GGSize.screenWidth(context) * 0.025),
+                    SizedBox(width: GGSize.screenWidth(context) * 0.025),  
                   ],
                 ),
                 SizedBox(height: 20),
