@@ -1,16 +1,41 @@
-# group_grit
+# Group Grit
 
-A new Flutter project.
+Group Grit is a mobile app built with Flutter to help people stay motivated, work in teams, and consistently achieve their goals.  
+The app supports challenges, groups, leaderboards, and personalized progress tracking.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 🚀 Main Features
 
-A few resources to get you started if this is your first Flutter project:
+- 🔥 Create and manage personal or group challenges  
+- 🏆 Real-time leaderboards and score tracking  
+- 👥 Support for public and private groups  
+- 📈 Individual progress tracking  
+- 📅 Motivational reminders and notifications  
+- ☁️ Firebase integration (Firestore, Authentication, Functions)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 📸 Screenshot
+<img src="https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/GroupGritSiteContent%2FScreenshot%202025-03-24%20at%2021.09.56.png?alt=media&token=fe5cf693-bfe6-4452-8841-7783ede8442e" width="300px">
+
+---
+
+## 🛠️ Technologies Used
+
+- [Flutter](https://flutter.dev) (cross-platform)
+- [Firebase](https://firebase.google.com/)
+  - Firestore
+  - Firebase Auth
+  - Firebase Functions
+
+---
+
+## ▶️ How to Run the Project
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/group-grit.git
+cd group-grit
+
