@@ -232,8 +232,8 @@ class SupportModal extends StatelessWidget {
       decoration: BoxDecoration(
         color: GGColors.backgroundColor,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(25),
-          topRight: Radius.circular(25),
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
         ),
       ),
       child: Column(
@@ -243,7 +243,7 @@ class SupportModal extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: GGSize.screenWidth(context) * 0.3,
+                width: GGSize.screenWidth(context) * 0.2,
                 height: 4,
                 decoration: BoxDecoration(
                   color: const Color.fromARGB(255, 198, 196, 196),
