@@ -191,23 +191,33 @@ class _MyGroupsPageState extends State<MyGroupsPage> {
                                         ),
                                         Flexible(
                                             child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
                                           children: [
                                             Container(
                                               width: GGSize.screenWidth(context) * 0.42,
                                               child: Padding(
                                                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 7),
                                                 child: Column(
+                                                  mainAxisAlignment: MainAxisAlignment.start,
                                                   crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
-                                                    Text(groupData['name'],
-                                                        style:
-                                                            TextStyle(fontWeight: FontWeight.bold, color: GGColors.primarytextColor, fontSize: 17)),
-                                                    Text(
-                                                      groupData['description'].length > 25
-                                                          ? '${groupData['description'].substring(0, 25)}...'
-                                                          : groupData['description'],
-                                                      style: TextStyle(fontWeight: FontWeight.w600, color: GGColors.secondarytextColor, fontSize: 13),
+                                                    Container(
+                                                      //width: GGSize.screenWidth(context) * 0.4,
+                                                      child: Text(
+                                                        groupData['name'],
+                                                        style: TextStyle(fontWeight: FontWeight.bold, color: GGColors.primarytextColor, fontSize: 17),
+                                                        overflow: TextOverflow.ellipsis,
+                                                        maxLines: 1,
+                                                      ),
+                                                    ),
+                                                    Container(
+                                                      //width: GGSize.screenWidth(context) * 0.4,
+                                                      child: Text(
+                                                        groupData['description'],
+                                                        style: TextStyle(fontWeight: FontWeight.w600, color: GGColors.secondarytextColor, fontSize: 13),
+                                                        overflow: TextOverflow.ellipsis,
+                                                        maxLines: 3,
+                                                      ),
                                                     ),
                                                   ],
                                                 ),
@@ -238,6 +248,15 @@ class _MyGroupsPageState extends State<MyGroupsPage> {
                                                     'groupId': groupId,
                                                     'name': groupData['name'],
                                                     'photo_url': groupData['photo_url']
+                                                  }).then((value) {
+                                                    setState(() {
+                                                      isLoading = true;
+                                                    });
+                                                    Future.delayed(Duration(milliseconds: 200)).then((value) {
+                                                      setState(() {
+                                                        isLoading = false;
+                                                      });
+                                                    });
                                                   });
                                                 })
                                           ],

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -5,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:group_grit/main.dart';
 import 'package:group_grit/utils/components/authButtons.dart';
 import 'package:group_grit/utils/constants/colors.dart';
 import 'package:group_grit/utils/constants/size.dart';
@@ -20,6 +23,8 @@ class DisplayNamePage extends StatefulWidget {
 class _UsernamePageState extends State<DisplayNamePage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController nameController = TextEditingController();
+  final FirebaseFirestore db = FirebaseFirestore.instance;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -104,53 +109,50 @@ class _UsernamePageState extends State<DisplayNamePage> {
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 0),
                           child: Text(
-                            "Before you get started, let's create your username",
+                            "Before you get started, let's set up your display name.",
                             style: TextStyle(color: GGColors.secondarytextColor, fontSize: 15),
                             textAlign: TextAlign.center,
                           ),
                         ),
                         Padding(
-                            padding: const EdgeInsets.only(top: 30),
-                            child: Row(
-                              children: [
-                                Text("Name and Surname",
-                                    style: TextStyle(color: GGColors.primarytextColor, fontSize: 15, fontWeight: FontWeight.bold)),
-                              ],
+                          padding: const EdgeInsets.only(top: 30),
+                          child: Row(
+                            children: [
+                              Text("Name and Surname", style: TextStyle(color: GGColors.primarytextColor, fontSize: 15, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 7),
+                        TextField(
+                          controller: nameController,
+                          keyboardType: TextInputType.emailAddress,
+                          style: TextStyle(color: GGColors.primarytextColor),
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(
+                              FontAwesomeIcons.user,
+                              color: GGColors.primarytextColor,
+                              size: 20,
+                            ),
+                            hintText: "Write your name and surname",
+                            hintStyle: TextStyle(color: GGColors.secondarytextColor),
+                            filled: true,
+                            fillColor: GGColors.TextFieldColor,
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(19),
+                              borderSide: BorderSide(color: GGColors.TextFieldColor, width: 0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(19),
+                              borderSide: BorderSide(color: GGColors.primaryColor, width: 2.0),
                             ),
                           ),
-                      
-                         SizedBox(height: 7),
-                         TextField(
-                            controller: nameController,
-                            keyboardType: TextInputType.emailAddress,
-                            style: TextStyle(color: GGColors.primarytextColor),
-                            decoration: InputDecoration(
-                              prefixIcon: Icon(
-                                FontAwesomeIcons.user,
-                                color: GGColors.primarytextColor,
-                                size: 20,
-                              ),
-                              hintText: "Write your name and surname",
-                              hintStyle: TextStyle(color: GGColors.secondarytextColor),
-                              filled: true,
-                              fillColor: GGColors.TextFieldColor,
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(19),
-                                borderSide: BorderSide(color: GGColors.TextFieldColor, width: 0),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(19),
-                                borderSide: BorderSide(color: GGColors.primaryColor, width: 2.0),
-                              ),
-                            ),
-                          ),
-                        
+                        ),
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 20),
                           child: CupertinoButton(
                             padding: EdgeInsets.zero,
                             onPressed: () async {
-                               if (nameController.text.isEmpty) {
+                              if (nameController.text.isEmpty) {
                                 Fluttertoast.showToast(
                                   msg: "Please fill the field",
                                   toastLength: Toast.LENGTH_LONG,
@@ -160,31 +162,77 @@ class _UsernamePageState extends State<DisplayNamePage> {
                                   fontSize: 14.0,
                                 );
                               } else {
-                                
-                                  FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(FirebaseAuth.instance.currentUser!.uid)
-                                      .update({'display_name': nameController.text.trim()}).then((value) {
-                                    Fluttertoast.showToast(
-                                      msg: "Name updated",
-                                      toastLength: Toast.LENGTH_LONG,
-                                      gravity: ToastGravity.TOP,
-                                      backgroundColor: Colors.green,
-                                      textColor: Colors.black,
-                                      fontSize: 14.0,
-                                    );
-                                    Duration(seconds: 2);
-                                    Navigator.pushNamed(context, '/HomePage');
-                                  });
+                                setState(() {
+                                  _isLoading = true;
+                                });
+                                final connectivityResult = await InternetAddress.lookup('google.com');
+                                if (connectivityResult.isNotEmpty && connectivityResult[0].rawAddress.isNotEmpty) {
+                                  print('Connection state: ✅ Connected to the internet');
+                                } else {
+                                  print('Connection state: ❌ No internet connection');
                                 }
-                              },
-                            
+                                final existingUsernames = await db.collection('users').get().then((snapshot) {
+                                  return snapshot.docs.map((doc) => doc['username'] as String).toList();
+                                });
+
+                                String generateUniqueUsername(String baseName, List<String> existingUsernames) {
+                                  String username = baseName;
+                                  int counter = 1;
+                                  while (existingUsernames.contains(username)) {
+                                    username = '$baseName$counter';
+                                    counter++;
+                                  }
+                                  return username;
+                                }
+
+                                final baseUsername = FirebaseAuth.instance.currentUser?.displayName?.replaceAll(' ', '').toLowerCase() ?? 'user';
+                                final uniqueUsername = generateUniqueUsername(baseUsername, existingUsernames);
+                                //final valid = await accountExist("${FirebaseAuth.instance.currentUser?.email}");
+
+                                final user = {
+                                  'display_name': '${nameController.text.trim()}',
+                                  'email': FirebaseAuth.instance.currentUser!.email,
+                                  'created_time': DateTime.now(),
+                                  'uid': FirebaseAuth.instance.currentUser!.uid,
+                                  'photo_url':
+                                      'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede',
+                                  'username': uniqueUsername,
+                                };
+                                await FirebaseAuth.instance.currentUser?.updatePhotoURL(
+                                    'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede');
+                                await db
+                                    .collection('users')
+                                    .doc(FirebaseAuth.instance.currentUser!.uid)
+                                    .set(user)
+                                    .onError((e, _) => print("Error writing document: $e"));
+                                setState(() {
+                                  _isLoading = false;
+                                });
+
+                                navigatorKey.currentState!.pushNamedAndRemoveUntil('/UsernamePage', (_) => false);
+                              }
+                            },
                             child: Container(
                               width: screenWidth,
                               height: screenHeight * 0.06,
                               decoration: BoxDecoration(color: GGColors.primaryColor, borderRadius: BorderRadius.circular(21)),
-                              child:
-                                  Center(child: Text("Continue", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18))),
+                              child: Center(
+                                  child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text("Continue", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                                  SizedBox(width: 10),
+                                  Visibility(
+                                      visible: _isLoading == true ? true : false,
+                                      child: SizedBox(
+                                          width: 15,
+                                          height: 15,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          )))
+                                ],
+                              )),
                             ),
                           ),
                         ),

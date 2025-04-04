@@ -1,6 +1,7 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -57,8 +58,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         body: ListView(physics: BouncingScrollPhysics(), children: [
           ProfileWidget(
-            imagePath: user['photo_url'] ??
-                'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/user_photos%2FcNhA32GBUteczS4u9yThwf4KAaC3%2FprofilePage?alt=media&token=2788526e-2e95-45a0-86ab-ec9743546c47',
+            imagePath: user['photo_url'] ??'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede',
             onClicked: () async {
               final result = await Navigator.of(context)
                   .push(
@@ -132,10 +132,16 @@ class DeleteUserModal extends StatefulWidget {
 
 class _DeleteUserModalState extends State<DeleteUserModal> {
   final TextEditingController emailController = TextEditingController();
-
   final TextEditingController passwordController = TextEditingController();
+  final _remoteConfig = FirebaseRemoteConfig.instance;
 
   bool _isLoading = false;
+  
+  @override
+  void initState() {
+    _initRemoteConfig();
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -353,6 +359,20 @@ class _DeleteUserModalState extends State<DeleteUserModal> {
     }
   }
 
+    _initRemoteConfig() async {
+    await _remoteConfig.setDefaults({
+      'showUserReAuth': true,
+    });
+
+    await _remoteConfig.setConfigSettings(RemoteConfigSettings(fetchTimeout: Duration(seconds: 10), minimumFetchInterval: Duration(seconds: 10)));
+    await _remoteConfig.fetchAndActivate();
+
+    _remoteConfig.onConfigUpdated.listen((event) async {
+      await _remoteConfig.activate();
+      setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -374,7 +394,7 @@ class _DeleteUserModalState extends State<DeleteUserModal> {
               Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  if (FirebaseAuth.instance.currentUser!.providerData[0].providerId == 'password')
+                  if (FirebaseAuth.instance.currentUser!.providerData[0].providerId == 'password' && _remoteConfig.getBool('showUserReAuth')==true)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(

@@ -8,7 +8,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:group_grit/i18n/t_data.dart';
 import 'package:group_grit/l10n/app_localizations.dart';
 import 'package:group_grit/main.dart';
-import 'package:group_grit/pages/VideoPlayerPage.dart';
+import 'package:group_grit/pages/VideoPreview/VideoPlayerPage.dart';
 import 'package:group_grit/utils/components/drawer.dart';
 import 'package:group_grit/utils/components/groupsButtons.dart';
 import 'package:group_grit/utils/constants/colors.dart';
@@ -175,6 +175,8 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+
+
   @override
   void initState() {
     getDocument();
@@ -186,10 +188,39 @@ class _HomePageState extends State<HomePage> {
     super.initState();
   }
 
+Future<void> sendWelcomeEmail() async {
+  await FirebaseFirestore.instance.collection('emails').add({
+    'from': {
+      'email': 'noreply@groupgrit.io', // mittente verificato su MailerSend
+    },
+    'to': [
+      {
+        'email': 'arturo@groupgrit.io',
+      }
+    ],
+    'subject': 'Welcome to GroupGrit!',
+    'html': '''
+      <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2 style="color: #333;">🎉 Welcome to <span style="color: #000;">GroupGrit</span>!</h2>
+        <p>Hello,</p>
+        <p>Thank you for signing up for <strong>GroupGrit</strong>.</p>
+        <p>You are now ready to start your first challenge and give your best with your group.</p>
+        <p style="margin-top: 20px;">
+          🔥 Stay consistent.<br>
+          💬 Motivate others.<br>
+          🏆 Grow together.
+        </p>
+        <p style="margin-top: 30px;">See you soon,<br><strong>The GroupGrit Team</strong></p>
+      </div>
+    ''',
+  });
+}
+
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-
+    print(GGSize.screenWidth(context) * 0.35);
     return Scaffold(
       drawerEnableOpenDragGesture: false,
       backgroundColor: GGColors.backgroundColor,
@@ -212,10 +243,15 @@ class _HomePageState extends State<HomePage> {
                     ),
                     Image.asset(
                       'assets/images/logo.png',
-                      width: GGSize.screenWidth(context) * 0.35,
+                      width: GGSize.screenWidth(context) * 0.35 > 280 ? GGSize.screenWidth(context) * 0.22 : GGSize.screenWidth(context) * 0.35,
                     ),
                     //Text("GroupGrit", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: GGColors.primaryColor)),
-                    SizedBox(width: GGSize.screenWidth(context) * 0.025),  
+                    SizedBox(width: GGSize.screenWidth(context) * 0.025),
+                    /*GestureDetector(
+                      onTap: () {
+                        sendWelcomeEmail();
+                      },
+                      child: Icon(Icons.notifications, color: GGColors.primarytextColor)),*/
                   ],
                 ),
                 SizedBox(height: 20),
@@ -230,15 +266,17 @@ class _HomePageState extends State<HomePage> {
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () {
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => VideoPlayerPage(
                           imageUrl:
-                              "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/mockup.png?alt=media&token=d7bf44bf-0e71-40a5-9d4c-a019bcd7b043",
-                          videoUrl: "https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4", // <-- URL del video
+                              "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/GroupGritContent%2FVideo-Preview.png?alt=media&token=e15b611c-6838-4cc2-96c2-a50b93eca0ba",
+                          videoUrl:
+                              "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/GroupGritContent%2FSequence%2001.mp4?alt=media&token=1e5e2e69-a781-4d2e-adb0-e2de99cb5d0d", // <-- URL del video
                         ),
                       ),
                     );
@@ -248,16 +286,16 @@ class _HomePageState extends State<HomePage> {
                     child: Stack(
                       children: [
                         Hero(
-                          
                           tag: "videoHero",
                           child: Container(
                             width: GGSize.screenWidth(context),
                             height: GGSize.screenHeight(context) * 0.22,
                             decoration: BoxDecoration(
+                              color: Color.fromRGBO(234, 234, 234, 1),
                               image: DecorationImage(
                                 image: CachedNetworkImageProvider(
-                                    "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/mockup.png?alt=media&token=d7bf44bf-0e71-40a5-9d4c-a019bcd7b043"),
-                                fit: BoxFit.cover,
+                                    "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/GroupGritContent%2FVideo-Preview.png?alt=media&token=e15b611c-6838-4cc2-96c2-a50b93eca0ba"),
+                                fit: BoxFit.fitHeight,
                               ),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
@@ -267,8 +305,21 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         Positioned.fill(
-                          child: Center(
-                            child: Icon(CupertinoIcons.play_fill, color: Colors.white, size: 40),
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: Container(
+                              width: 55,
+                              height: 55,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.9),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.play_arrow,
+                                color: Colors.black87,
+                                size: 50,
+                              ),
+                            ),
                           ),
                         ),
                       ],

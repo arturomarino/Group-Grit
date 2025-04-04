@@ -20,7 +20,7 @@ import 'package:group_grit/pages/Authentication/ForgotPasswordPage.dart';
 import 'package:group_grit/pages/Authentication/SignupPage.dart';
 import 'package:group_grit/pages/Authentication/UsernamePage.dart';
 import 'package:group_grit/pages/Chat/ChatPage.dart';
-import 'package:group_grit/pages/Groups/CreateActivity.dart';
+import 'package:group_grit/pages/Groups/CreateChallenge.dart';
 import 'package:group_grit/pages/Groups/CreateGroupPage.dart';
 import 'package:group_grit/pages/Groups/EditGroupPage.dart';
 import 'package:group_grit/pages/Groups/GiveExcusePage.dart';
@@ -32,6 +32,7 @@ import 'package:group_grit/pages/HomePage.dart';
 import 'package:group_grit/pages/Authentication/LoginPage.dart';
 import 'package:group_grit/pages/User/LanguagePage.dart';
 import 'package:group_grit/pages/User/ProfilePage.dart';
+import 'package:group_grit/pages/VideoPreview/VideoPlayerHorizontalPage.dart';
 import 'package:group_grit/utils/appState.dart';
 import 'package:group_grit/utils/components/VideoWidget.dart';
 import 'package:group_grit/utils/components/authButtons.dart';
@@ -105,7 +106,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> initMixpanel() async {
     // initialize Mixpanel
-   // mixpanel = await Mixpanel.init("587c9d6454f9336fe2cd90647429f9ad", trackAutomaticEvents: false);
+    // mixpanel = await Mixpanel.init("587c9d6454f9336fe2cd90647429f9ad", trackAutomaticEvents: false);
 
     //mixpanel?.setLoggingEnabled(true);
     final packageInfo = await PackageInfo.fromPlatform();
@@ -123,9 +124,7 @@ class _MyAppState extends State<MyApp> {
   void monitorInternetConnection() {
     bool? isConnected = false;
 
-    Stream.periodic(Duration(seconds: 5))
-        .asyncMap((_) => InternetAddress.lookup('google.com'))
-        .listen((result) {
+    Stream.periodic(Duration(seconds: 5)).asyncMap((_) => InternetAddress.lookup('google.com')).listen((result) {
       bool currentlyConnected = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
 
       if (isConnected == null || isConnected != currentlyConnected) {
@@ -168,45 +167,40 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-void setupFirebaseMessaging() {
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print("📩 Messaggio ricevuto in foreground: ${message.data}");
-    if(Platform.isIOS){
-      print("🍏 iOS gestisce la notifica tramite APNs, nessuna notifica manuale.");
-      return;
-    }
+  void setupFirebaseMessaging() {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("📩 Messaggio ricevuto in foreground: ${message.data}");
+      if (Platform.isIOS) {
+        print("🍏 iOS gestisce la notifica tramite APNs, nessuna notifica manuale.");
+        return;
+      }
 
-    // 🔴 Puliamo il payload
-    Map<String, String> cleanedPayload = {};
-    message.data.forEach((key, value) {
-      if (value != null &&
-          value != "null" &&
-          value != "<null>" &&
-          value != "undefined" &&
-          value.toString().trim().isNotEmpty) {
-        cleanedPayload[key] = value.toString();
-      } else {
-        cleanedPayload[key] = ""; // 🔴 Imposta stringa vuota invece di `null`
+      // 🔴 Puliamo il payload
+      Map<String, String> cleanedPayload = {};
+      message.data.forEach((key, value) {
+        if (value != null && value != "null" && value != "<null>" && value != "undefined" && value.toString().trim().isNotEmpty) {
+          cleanedPayload[key] = value.toString();
+        } else {
+          cleanedPayload[key] = ""; // 🔴 Imposta stringa vuota invece di `null`
+        }
+      });
+
+      // 🔥 Creiamo la notifica solo se il payload è valido
+      if (cleanedPayload.isNotEmpty) {
+        print("📩 Creazione notifica con payload pulito: $cleanedPayload");
+        AwesomeNotifications().createNotification(
+          content: NotificationContent(
+            id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
+            channelKey: 'basic_channel',
+            title: cleanedPayload['title'] ?? 'Nuova notifica',
+            body: cleanedPayload['body'] ?? 'Hai ricevuto un nuovo messaggio',
+            payload: cleanedPayload, // Usa il payload pulito
+            notificationLayout: NotificationLayout.BigText,
+          ),
+        );
       }
     });
-
-    // 🔥 Creiamo la notifica solo se il payload è valido
-    if (cleanedPayload.isNotEmpty) {
-      print("📩 Creazione notifica con payload pulito: $cleanedPayload");
-      AwesomeNotifications().createNotification(
-        content: NotificationContent(
-          id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
-          channelKey: 'basic_channel',
-          title: cleanedPayload['title'] ?? 'Nuova notifica',
-          body: cleanedPayload['body'] ?? 'Hai ricevuto un nuovo messaggio',
-          payload: cleanedPayload, // Usa il payload pulito
-          notificationLayout: NotificationLayout.BigText,
-        ),
-      );
-    }
-  });
-}
-
+  }
 
   void checkInitialNotification() async {
     ReceivedAction? receivedAction = await AwesomeNotifications().getInitialNotificationAction();
@@ -308,12 +302,13 @@ void setupFirebaseMessaging() {
                 '/GroupPage': (context) => GroupPage(),
                 '/UploadVideoPage': (context) => UploadVideoPage(idChallenge: '', idGruppo: ''),
                 '/GiveExcusePage': (context) => GiveExcusePage(),
-                '/CreateActivityPage': (context) => CreateActivityPage(),
+                '/CreateChallengePage': (context) => CreateChallengePage(),
                 '/LanguagePage': (context) => LanguagePage(),
                 '/ChatPage': (context) => ChatPage(
                       groupId: '',
                     ),
                 '/DisplayNamePage': (context) => DisplayNamePage(),
+                '/VideoPlayerHorizontalPage': (context) => VideoPlayerHorizontalPage(videoUrl: '', imageUrl: '', controller: null,),
               },
             ));
   }
@@ -331,11 +326,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     // 🔴 Puliamo il payload per evitare crash su Android
     Map<String, String> cleanedPayload = {};
     message.data.forEach((key, value) {
-      if (value != null &&
-          value != "null" &&
-          value != "<null>" &&
-          value != "undefined" &&
-          value.toString().trim().isNotEmpty) {
+      if (value != null && value != "null" && value != "<null>" && value != "undefined" && value.toString().trim().isNotEmpty) {
         cleanedPayload[key] = value.toString();
       } else {
         cleanedPayload[key] = ""; // 🔴 Imposta stringa vuota invece di `null`
@@ -357,8 +348,6 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     }
   }
 }
-
-
 
 // Definisci il comportamento quando una notifica viene cliccata
 Future<void> onNotificationClicked(ReceivedAction receivedAction) async {

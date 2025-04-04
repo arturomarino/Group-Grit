@@ -8,18 +8,18 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:group_grit/utils/constants/colors.dart';
 import 'package:group_grit/utils/constants/size.dart';
 
-class CreateActivityPage extends StatefulWidget {
+class CreateChallengePage extends StatefulWidget {
   @override
-  State<CreateActivityPage> createState() => _CreateActivityPageState();
+  State<CreateChallengePage> createState() => _CreateChallengePageState();
 }
 
-class _CreateActivityPageState extends State<CreateActivityPage> {
+class _CreateChallengePageState extends State<CreateChallengePage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   String dropdownValue = 'Yes';
 
-  final TextEditingController _activityNameController = TextEditingController();
+  final TextEditingController _challengeNameController = TextEditingController();
 
-  final TextEditingController _activityDescriptionController = TextEditingController();
+  final TextEditingController _challengeDescriptionController = TextEditingController();
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime = TimeOfDay.now();
@@ -28,7 +28,6 @@ class _CreateActivityPageState extends State<CreateActivityPage> {
 
   // Function to select the date
   Future<void> _selectDate(BuildContext context) async {
-    
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -159,7 +158,7 @@ class _CreateActivityPageState extends State<CreateActivityPage> {
         appBar: AppBar(
           backgroundColor: GGColors.backgroundColor,
           title: Text(
-            'Create Activity',
+            'Create Challenge',
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
           ),
         ),
@@ -184,7 +183,7 @@ class _CreateActivityPageState extends State<CreateActivityPage> {
                       padding: const EdgeInsets.only(top: 20),
                       child: Row(
                         children: [
-                          Text("Activity Name", style: TextStyle(color: GGColors.primarytextColor, fontSize: 15, fontWeight: FontWeight.bold)),
+                          Text("Challenge Name", style: TextStyle(color: GGColors.primarytextColor, fontSize: 15, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -192,7 +191,7 @@ class _CreateActivityPageState extends State<CreateActivityPage> {
                     //() => _selectTime(context),
 
                     TextFormField(
-                      controller: _activityNameController,
+                      controller: _challengeNameController,
                       keyboardType: TextInputType.text,
                       style: TextStyle(color: GGColors.primarytextColor),
                       decoration: InputDecoration(
@@ -228,13 +227,13 @@ class _CreateActivityPageState extends State<CreateActivityPage> {
                       padding: const EdgeInsets.only(top: 15, bottom: 7),
                       child: Row(
                         children: [
-                          Text("Activity Must be done between:",
+                          Text("Challenge Must be done between:",
                               style: TextStyle(color: GGColors.primarytextColor, fontSize: 15, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
                     CupertinoButton(
-                        onPressed: () {
+                      onPressed: () {
                         FocusScope.of(context).unfocus();
                         Future.delayed(Duration(milliseconds: 500), () {
                           _selectDate(context);
@@ -357,19 +356,19 @@ class _CreateActivityPageState extends State<CreateActivityPage> {
                       padding: const EdgeInsets.only(top: 20),
                       child: Row(
                         children: [
-                          Text("Activity Description", style: TextStyle(color: GGColors.primarytextColor, fontSize: 15, fontWeight: FontWeight.bold)),
+                          Text("Challenge Description", style: TextStyle(color: GGColors.primarytextColor, fontSize: 15, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
                     SizedBox(height: 7),
                     TextFormField(
-                      controller: _activityDescriptionController,
+                      controller: _challengeDescriptionController,
                       keyboardType: TextInputType.text,
                       minLines: 5,
                       maxLines: 7,
                       style: TextStyle(color: GGColors.primarytextColor),
                       decoration: InputDecoration(
-                        hintText: "If needed, give more details/instructions for the activity, or upload video demo below",
+                        hintText: "If needed, give more details/instructions for the challenge, or upload video demo below",
                         hintStyle: TextStyle(color: Color.fromARGB(170, 82, 82, 82), fontWeight: FontWeight.w500),
                         filled: true,
                         fillColor: GGColors.buttonColor,
@@ -452,8 +451,8 @@ class _CreateActivityPageState extends State<CreateActivityPage> {
                             var challengeDoc =
                                 FirebaseFirestore.instance.collection('groups').doc(arguments['groupId']).collection('challenges').doc();
                             await challengeDoc.set({
-                              'activityName': _activityNameController.text.trim(),
-                              'activityDescription': _activityDescriptionController.text.trim(),
+                              'activityName': _challengeNameController.text.trim(),
+                              'activityDescription': _challengeDescriptionController.text.trim(),
                               'startDateTime': startDateTime,
                               'endDateTime': endDateTime,
                               'videoUploadNeeded': dropdownValue,
@@ -478,7 +477,7 @@ class _CreateActivityPageState extends State<CreateActivityPage> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text("Create Activity", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                                Text("Create Challenge", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
                                 SizedBox(width: 10),
                                 Visibility(
                                     visible: _showCircle,

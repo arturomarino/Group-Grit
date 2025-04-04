@@ -66,7 +66,6 @@ class _MyDrawerState extends State<MyDrawer> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-
     return Drawer(
       backgroundColor: GGColors.backgroundColor,
       shape: RoundedRectangleBorder(
@@ -94,7 +93,7 @@ class _MyDrawerState extends State<MyDrawer> {
                     ),
                     Image.asset(
                       'assets/images/logo.png',
-                      width: GGSize.screenWidth(context) * 0.33,
+                      width: GGSize.screenWidth(context) * 0.33 > 270 ? GGSize.screenWidth(context) * 0.2 : GGSize.screenWidth(context) * 0.35,
                     ),
                   ],
                 ),
@@ -110,7 +109,7 @@ class _MyDrawerState extends State<MyDrawer> {
                       child: ClipOval(
                         child: CachedNetworkImage(
                           imageUrl: user['photo_url'] ??
-                              'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/user_photos%2FcNhA32GBUteczS4u9yThwf4KAaC3%2FprofilePage?alt=media&token=2788526e-2e95-45a0-86ab-ec9743546c47', // Evita null e rende l'URL univoco
+                              'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede', // Evita null e rende l'URL univoco
                           fit: BoxFit.cover,
                           width: 50,
                           height: 50,
@@ -253,52 +252,50 @@ class SupportModal extends StatelessWidget {
               )
             ],
           ),
-           SizedBox(height: GGSize.screenHeight(context) * 0.025),
+          SizedBox(height: GGSize.screenHeight(context) * 0.025),
           Text('Live Chat Support coming soon...', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           SizedBox(height: 10),
           Row(
             children: [
-                Expanded(
+              Expanded(
                 child: RichText(
                   text: TextSpan(
-                  text: 'In the meantime, if you have any questions or need help, please email us at ',
-                  style: TextStyle(fontSize: 16, color: Colors.black,fontWeight: FontWeight.w500),
-                  children: [
-                    TextSpan(
-                    text: 'support@groupgrit.io',
-                    style: TextStyle(fontSize: 16, color: Colors.blue, decoration: TextDecoration.underline),
-                    recognizer: TapGestureRecognizer()
-                      ..onTap = () {
-                      launchUrl(Uri.parse('mailto:support@groupgrit.io'));
-                      },
-                    ),
-                  ],
+                    text: 'In the meantime, if you have any questions or need help, please email us at ',
+                    style: TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.w500),
+                    children: [
+                      TextSpan(
+                        text: 'support@groupgrit.io',
+                        style: TextStyle(fontSize: 16, color: Colors.blue, decoration: TextDecoration.underline),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            launchUrl(Uri.parse('mailto:support@groupgrit.io'));
+                          },
+                      ),
+                    ],
                   ),
                 ),
-                ),
-              
+              ),
             ],
           ),
-            SizedBox(height: GGSize.screenHeight(context) * 0.05),
-            Center(
+          SizedBox(height: GGSize.screenHeight(context) * 0.05),
+          Center(
             child: Column(
               children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(22),
-                child: Image.asset(
-                'assets/images/logoIcon.jpg',
-                width: GGSize.screenWidth(context) * 0.24,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: Image.asset(
+                    'assets/images/logoIcon.jpg',
+                    width: GGSize.screenWidth(context) * 0.24,
+                  ),
                 ),
-              ),
-              SizedBox(height: 10),
-              Text(
-                'Version 1.0.0',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black),
-              ),
+                SizedBox(height: 10),
+                Text(
+                  'Version 1.0.0',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black),
+                ),
               ],
             ),
-            ),
-          
+          ),
         ],
       ),
     );

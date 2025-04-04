@@ -8,6 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:group_grit/main.dart';
 import 'package:group_grit/pages/Authentication/UsernamePage.dart';
 import 'package:group_grit/utils/components/authButtons.dart';
 import 'package:group_grit/utils/constants/colors.dart';
@@ -414,10 +415,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                           .set(user)
                                           .onError((e, _) => print("Error writing document: $e"));
 
-                                      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-                                        '/UsernamePage',
-                                        (_) => false,
-                                      );
+                                      navigatorKey.currentState!.pushNamedAndRemoveUntil('/UsernamePage', (_) => false);
                                     } else {
                                       Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
                                         '/HomePage',
@@ -435,6 +433,9 @@ class _SignUpPageState extends State<SignUpPage> {
                                       //CODICE CORRETTO PER SIGN IN WITH APPLE
                                       AuthService().signInWithApple().then((value) async {
                                         if (value != null) {
+                                          /*print('value user: ${value.additionalUserInfo?.profile?['lastName']}');
+                                          print('value user: ${value.additionalUserInfo?.profile?['firstName']}');
+                                          print('Firebase User: '+'${FirebaseAuth.instance.currentUser?.displayName}');*/
                                           final connectivityResult = await InternetAddress.lookup('google.com');
                                           if (connectivityResult.isNotEmpty && connectivityResult[0].rawAddress.isNotEmpty) {
                                             print('Connection state: ✅ Connected to the internet');
@@ -459,38 +460,31 @@ class _SignUpPageState extends State<SignUpPage> {
                                               FirebaseAuth.instance.currentUser?.displayName?.replaceAll(' ', '').toLowerCase() ?? 'user';
                                           final uniqueUsername = generateUniqueUsername(baseUsername, existingUsernames);
                                           //final valid = await accountExist("${FirebaseAuth.instance.currentUser?.email}");
-                                          Future.delayed(Duration(seconds: 2), () async {
-                                            // print(valid);
-                                            print(value.additionalUserInfo?.isNewUser);
-                                            if (value.additionalUserInfo?.isNewUser == true) {
-                                              final user = {
-                                                'display_name': '',
-                                                'email': FirebaseAuth.instance.currentUser?.email,
-                                                'created_time': DateTime.now(),
-                                                'uid': FirebaseAuth.instance.currentUser?.uid,
-                                                'photo_url':
-                                                    'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede',
-                                                'username': uniqueUsername,
-                                              };
-                                              await FirebaseAuth.instance.currentUser?.updatePhotoURL(
-                                                  'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede');
-                                              await db
-                                                  .collection('users')
-                                                  .doc(FirebaseAuth.instance.currentUser?.uid)
-                                                  .set(user)
-                                                  .onError((e, _) => print("Error writing document: $e"));
+                                          if (value.additionalUserInfo?.isNewUser == true) {
+                                            final user = {
+                                              'display_name': '${value.additionalUserInfo?.profile?['firstName']} ${value.additionalUserInfo?.profile?['lastName']}',
+                                              'email': FirebaseAuth.instance.currentUser!.email,
+                                              'created_time': DateTime.now(),
+                                              'uid': FirebaseAuth.instance.currentUser!.uid,
+                                              'photo_url':
+                                                  'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede',
+                                              'username': uniqueUsername,
+                                            };
+                                            await FirebaseAuth.instance.currentUser?.updatePhotoURL(
+                                                'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede');
+                                            await db
+                                                .collection('users')
+                                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                                .set(user)
+                                                .onError((e, _) => print("Error writing document: $e"));
 
-                                              Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-                                                '/UsernamePage',
-                                                (_) => false,
-                                              );
-                                            } else {
-                                              Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-                                                '/HomePage',
-                                                (_) => false,
-                                              );
-                                            }
-                                          });
+                                            navigatorKey.currentState!.pushNamedAndRemoveUntil('/UsernamePage', (_) => false);
+                                          } else {
+                                            Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+                                              '/HomePage',
+                                              (_) => false,
+                                            );
+                                          }
                                         }
                                       });
                                     })

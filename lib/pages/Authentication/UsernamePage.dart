@@ -23,6 +23,7 @@ class _UsernamePageState extends State<UsernamePage> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
   final _remoteConfig = FirebaseRemoteConfig.instance;
+  bool _isLoading = false;
 
   bool diplay_name_exist = false;
 
@@ -190,7 +191,7 @@ class _UsernamePageState extends State<UsernamePage> {
                           ],
                         ),
                         Visibility(
-                          visible: !diplay_name_exist,
+                          visible: false,
                           child: Padding(
                             padding: const EdgeInsets.only(top: 30),
                             child: Row(
@@ -201,9 +202,9 @@ class _UsernamePageState extends State<UsernamePage> {
                             ),
                           ),
                         ),
-                        Visibility(visible: !diplay_name_exist, child: SizedBox(height: 7)),
+                        Visibility(visible: false, child: SizedBox(height: 7)),
                         Visibility(
-                          visible: !diplay_name_exist,
+                          visible: false,
                           child: TextField(
                             controller: nameController,
                             keyboardType: TextInputType.emailAddress,
@@ -235,7 +236,6 @@ class _UsernamePageState extends State<UsernamePage> {
                             padding: EdgeInsets.zero,
                             onPressed: () async {
                               final valid = await usernameCheck(usernameController.text);
-                              print(valid);
                               if (usernameController.text.isEmpty || usernameController.text.length < 6) {
                                 Fluttertoast.showToast(
                                   msg: "Invalid username, at least 6 characters",
@@ -264,7 +264,11 @@ class _UsernamePageState extends State<UsernamePage> {
                                   fontSize: 14.0,
                                 );
                               } else {
+
                                 if (diplay_name_exist) {
+                                  setState(() {
+                                    _isLoading = true;
+                                  });
                                   FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).update({
                                     'username': usernameController.text.trim(),
                                   }).then((value) {
@@ -277,9 +281,15 @@ class _UsernamePageState extends State<UsernamePage> {
                                       fontSize: 14.0,
                                     );
                                     Duration(seconds: 2);
-                                    Navigator.pushNamed(context, '/HomePage');
+                                    setState(() {
+                                    _isLoading = false;
+                                  });
+                                  Navigator.pushNamedAndRemoveUntil(context, '/HomePage', (Route<dynamic> route) => false);
                                   });
                                 } else {
+                                  setState(() {
+                                    _isLoading = true;
+                                  });
                                   await FirebaseAuth.instance.currentUser?.updatePhotoURL(
                                       'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede');
                                   FirebaseFirestore.instance
@@ -295,7 +305,10 @@ class _UsernamePageState extends State<UsernamePage> {
                                       fontSize: 14.0,
                                     );
                                     Duration(seconds: 2);
-                                    Navigator.pushNamed(context, '/HomePage');
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                    Navigator.pushNamedAndRemoveUntil(context, '/HomePage', (Route<dynamic> route) => false);
                                   });
                                 }
                               }
@@ -304,8 +317,23 @@ class _UsernamePageState extends State<UsernamePage> {
                               width: screenWidth,
                               height: screenHeight * 0.06,
                               decoration: BoxDecoration(color: GGColors.primaryColor, borderRadius: BorderRadius.circular(21)),
-                              child:
-                                  Center(child: Text("Continue", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18))),
+                              child: Center(
+                                  child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text("Continue", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                                  SizedBox(width: 10),
+                                  Visibility(
+                                      visible: _isLoading == true ? true : false,
+                                      child: SizedBox(
+                                          width: 15,
+                                          height: 15,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          )))
+                                ],
+                              )),
                             ),
                           ),
                         ),

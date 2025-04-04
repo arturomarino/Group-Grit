@@ -92,20 +92,18 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
 
   Future<void> _fetchGroupData(String groupId) async {
     QuerySnapshot expiredChallenges = await FirebaseFirestore.instance
-      .collection('groups')
-      .doc(groupId)
-      .collection('challenges')
-      .where('endDateTime', isLessThan: DateTime.now())
-      .get();
+        .collection('groups')
+        .doc(groupId)
+        .collection('challenges')
+        .where('endDateTime', isLessThan: DateTime.now())
+        .get();
 
-    
     if (groupId.isNotEmpty) {
       DocumentSnapshot group = await FirebaseFirestore.instance.collection('groups').doc(groupId).get();
 
       setState(() {
         if (expiredChallenges.docs.isNotEmpty) {
-      
-        expiredChallengesExist = true;
+          expiredChallengesExist = true;
         }
         groupData = group;
       });
@@ -118,6 +116,39 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
         textColor: Colors.white,
         fontSize: 14.0,
       );
+    }
+  }
+  Future<void> _getGroupDetails(String groupId) async {
+    try {
+      DocumentSnapshot groupSnapshot =
+          await FirebaseFirestore.instance.collection('groups').doc(groupId).get();
+
+      if (groupSnapshot.exists) {
+        setState(() {
+          groupData = groupSnapshot;
+          final arguments = (ModalRoute.of(context)?.settings.arguments ?? <String, dynamic>{}) as Map;
+          arguments['name'] = groupSnapshot['name'];
+        });
+      } else {
+        Fluttertoast.showToast(
+          msg: "Group not found",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.TOP,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 14.0,
+        );
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Error fetching group details",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.TOP,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 14.0,
+      );
+      print("Error fetching group details: $e");
     }
   }
 
@@ -268,17 +299,21 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                           groupId: arguments['groupId'],
                                           groupData: groupData!,
                                         ),
-                                      ))
-                                          .then((value) {
-                                        _fetchGroupData(arguments['groupId']);
+                                      )).then((value) {
+                                        _getGroupDetails(arguments['groupId']);
                                       });
                                     },
                                     child: Icon(CupertinoIcons.info, color: Colors.blue, size: 24),
                                   ),
-                                  Text(
-                                    arguments['name'],
-                                    style: TextStyle(fontSize: 16, color: GGColors.primarytextColor, fontWeight: FontWeight.bold),
-                                  ),
+                                    Container(
+                                    width: GGSize.screenWidth(context) * 0.4,
+                                    child: Text(
+                                      arguments['name'],
+                                      style: TextStyle(fontSize: 16, color: GGColors.primarytextColor, fontWeight: FontWeight.bold),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                    ),
                                   Spacer(),
                                   CupertinoButton(
                                     padding: EdgeInsets.zero,
@@ -371,11 +406,10 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: GGColors.primaryColor))),
                             ),
                             onPressed: () {
-                              Navigator.pushNamed(context, '/CreateActivityPage', arguments: {'groupId': arguments['groupId']});
+                              Navigator.pushNamed(context, '/CreateChallengePage', arguments: {'groupId': arguments['groupId']});
                             },
                             padding: EdgeInsets.zero,
                           )
-                          
                         ],
                       ),
                     ),
@@ -387,259 +421,273 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                   children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      child: 
-                       StreamBuilder<QuerySnapshot>(
-                            stream: FirebaseFirestore.instance
-                              .collection('groups')
-                              .doc(arguments['groupId'])
-                              .collection('challenges')
-                              .where('endDateTime', isGreaterThan: _showExpired ? DateTime(1900) : DateTime.now())
-                              .where('endDateTime', isLessThan: _showExpired ? DateTime.now() : DateTime(2100))
-                              .orderBy('endDateTime', descending: false)
-                              .snapshots(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return Center();
-                            }
-                            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                              return Column(
-                                children: [
-                                  Container(
-                                    child: Lottie.asset('assets/lotties/Training.json', fit: BoxFit.contain),
-                                    height: GGSize.screenHeight(context) * 0.3,
-                                    //width: GGSize.screenWidth(context) * 0.1,
-                                  ),
-                                ],
-                              );
-                            }
+                      child: StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('groups')
+                            .doc(arguments['groupId'])
+                            .collection('challenges')
+                            .where('endDateTime', isGreaterThan: _showExpired ? DateTime(1900) : DateTime.now())
+                            .where('endDateTime', isLessThan: _showExpired ? DateTime.now() : DateTime(2100))
+                            .orderBy('endDateTime', descending: false)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Center();
+                          }
+                          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                             return Column(
                               children: [
-                                Visibility(
-                                  visible: expiredChallengesExist,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                                    child: CupertinoButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          _showExpired = !_showExpired;
-                                        });
-                                      },
-                                      padding: EdgeInsets.zero,
-                                      child: Row(
-                                        mainAxisAlignment: _showExpired? MainAxisAlignment.start: MainAxisAlignment.end,
-                                        children: [
-                                          Visibility(
+                                Container(
+                                  child: Lottie.asset('assets/lotties/Training.json', fit: BoxFit.contain),
+                                  height: GGSize.screenHeight(context) * 0.3,
+                                  //width: GGSize.screenWidth(context) * 0.1,
+                                ),
+                              ],
+                            );
+                          }
+                          return Column(
+                            children: [
+                              Visibility(
+                                visible: expiredChallengesExist,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  child: CupertinoButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _showExpired = !_showExpired;
+                                      });
+                                    },
+                                    padding: EdgeInsets.zero,
+                                    child: Row(
+                                      mainAxisAlignment: _showExpired ? MainAxisAlignment.start : MainAxisAlignment.end,
+                                      children: [
+                                        Visibility(
                                             visible: _showExpired,
-                                            child: Icon(CupertinoIcons.back, color: Colors.black,size: 19,)),
-                                          Text(
-                                            _showExpired?"Back":"Show Expired Challenges",
-                                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black),
-                                          ),
-                                          SizedBox(width: 5),
-                                          Visibility(
+                                            child: Icon(
+                                              CupertinoIcons.back,
+                                              color: Colors.black,
+                                              size: 19,
+                                            )),
+                                        Text(
+                                          _showExpired ? "Back" : "Show Expired Challenges",
+                                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black),
+                                        ),
+                                        SizedBox(width: 5),
+                                        Visibility(
                                             visible: !_showExpired,
-                                            child: RotatedBox(child: Icon(CupertinoIcons.back, color: Colors.black,size: 19,), quarterTurns: 2)),
-                                        ],
-                                      ),
+                                            child: RotatedBox(
+                                                child: Icon(
+                                                  CupertinoIcons.back,
+                                                  color: Colors.black,
+                                                  size: 19,
+                                                ),
+                                                quarterTurns: 2)),
+                                      ],
                                     ),
                                   ),
                                 ),
-                                Expanded(
-                                  flex: 2,
-                                  child: ListView.builder(
-                                    itemCount: snapshot.data!.docs.length,
-                                    itemBuilder: (context, index) {
-                                      var challenge = snapshot.data!.docs[index];
-                                  
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 7),
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: GGColors.buttonColor,
-                                            borderRadius: BorderRadius.circular(15),
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 18),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                SizedBox(height: 15),
-                                                Padding(
-                                                  padding: const EdgeInsets.only(bottom: 5),
-                                                  child: Row(
-                                                    children: [
-                                                      Container(
-                                                        //Color.fromRGBO(255, 30, 0, 0.1) RED
-                                                        decoration: BoxDecoration(
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: ListView.builder(
+                                  itemCount: snapshot.data!.docs.length,
+                                  itemBuilder: (context, index) {
+                                    var challenge = snapshot.data!.docs[index];
+
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 7),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: GGColors.buttonColor,
+                                          borderRadius: BorderRadius.circular(15),
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 18),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              SizedBox(height: 15),
+                                              Padding(
+                                                padding: const EdgeInsets.only(bottom: 5),
+                                                child: Row(
+                                                  children: [
+                                                    Container(
+                                                      //Color.fromRGBO(255, 30, 0, 0.1) RED
+                                                      decoration: BoxDecoration(
+                                                        color: challenge['endDateTime'].toDate().isBefore(DateTime.now())
+                                                            ? Color.fromRGBO(255, 30, 0, 0.1)
+                                                            : GGColors.primaryColor.withOpacity(0.25),
+                                                        borderRadius: BorderRadius.circular(5),
+                                                      ),
+                                                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                                      child: Text(
+                                                        challenge['endDateTime'].toDate().isBefore(DateTime.now())
+                                                            ? 'Expired'
+                                                            : challenge['startDateTime'].toDate().isAfter(DateTime.now())
+                                                                ? 'Starts in: ${_formatDuration(challenge['startDateTime'].toDate().difference(DateTime.now()))}'
+                                                                : 'Ends in: ${_formatDuration(challenge['endDateTime'].toDate().difference(DateTime.now()))}',
+                                                        style: TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight: FontWeight.w600,
                                                           color: challenge['endDateTime'].toDate().isBefore(DateTime.now())
-                                                              ? Color.fromRGBO(255, 30, 0, 0.1)
-                                                              : GGColors.primaryColor.withOpacity(0.25),
-                                                          borderRadius: BorderRadius.circular(5),
-                                                        ),
-                                                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                                                        child: Text(
-                                                          challenge['endDateTime'].toDate().isBefore(DateTime.now())
-                                                              ? 'Expired'
-                                                              : challenge['startDateTime'].toDate().isAfter(DateTime.now())
-                                                                  ? 'Starts in: ${_formatDuration(challenge['startDateTime'].toDate().difference(DateTime.now()))}'
-                                                                  : 'Ends in: ${_formatDuration(challenge['endDateTime'].toDate().difference(DateTime.now()))}',
-                                                          style: TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight: FontWeight.w600,
-                                                            color: challenge['endDateTime'].toDate().isBefore(DateTime.now())
-                                                                ? Colors.red
-                                                                : GGColors.primaryColor,
-                                                          ),
+                                                              ? Colors.red
+                                                              : GGColors.primaryColor,
                                                         ),
                                                       ),
-                                                      Spacer(),
-                                                    ],
-                                                  ),
+                                                    ),
+                                                    Spacer(),
+                                                  ],
                                                 ),
-                                                Text(
-                                                  challenge['activityName'],
-                                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: GGColors.primarytextColor),
-                                                  textAlign: TextAlign.start,
-                                                ),
-                                                Visibility(
-                                                  visible: challenge['activityDescription'] == '' ? false : true,
-                                                  child: Row(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Visibility(
-                                                          visible: challenge['activityDescription'] == '' ? false : true,
-                                                          child: Icon(CupertinoIcons.info, color: GGColors.primaryColor, size: 18)),
-                                                      SizedBox(width: 5),
-                                                      Expanded(
-                                                        child: Text(
-                                                          challenge['activityDescription'],
-                                                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: GGColors.secondarytextColor),
-                                                          textAlign: TextAlign.start,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                Row(
+                                              ),
+                                              Text(
+                                                challenge['activityName'],
+                                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: GGColors.primarytextColor),
+                                                textAlign: TextAlign.start,
+                                              ),
+                                              Visibility(
+                                                visible: challenge['activityDescription'] == '' ? false : true,
+                                                child: Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
                                                     Visibility(
-                                                        visible: !challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
-                                                            userChallenges.any((uc) =>
-                                                                uc['challengeId'] == challenge.id && (uc['videoUrl'] != null || uc['excuse'] != null)),
-                                                        child: CupertinoButton(
-                                                          padding: EdgeInsets.zero,
-                                                          onPressed: () {
-                                                            showModalBottomSheet(
-                                                              context: context,
-                                                              builder: (BuildContext context) {
-                                                                return DeleteVideoBottomSheet(
-                                                                  isExcuse:
-                                                                      userChallenges.any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null),
-                                                                  onTap: () {
-                                                                    if (userChallenges
-                                                                        .any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null)) {
-                                                                      FirebaseFirestore.instance
-                                                                          .collection('users_challenges')
-                                                                          .doc(userChallenges.firstWhere((uc) => uc['challengeId'] == challenge.id).id)
-                                                                          .delete();
-                                                                      userChallenges.removeWhere((uc) => uc['challengeId'] == challenge.id);
-                                                                      Fluttertoast.showToast(
-                                                                        msg: "Excuse deleted!",
-                                                                        toastLength: Toast.LENGTH_LONG,
-                                                                        gravity: ToastGravity.TOP,
-                                                                        backgroundColor: Colors.red,
-                                                                        textColor: Colors.white,
-                                                                        fontSize: 14.0,
-                                                                      );
-                                                                      Navigator.pop(context);
-                                                                    } else {
-                                                                      _deleteChallenge(context, apiKey, userChallenges, challenge.id).then((value) {
-                                                                        Future.delayed(Duration(seconds: 1), () {
-                                                                          fetchUserChallenges(arguments['groupId'], FirebaseAuth.instance.currentUser!.uid);
-                                                                          Fluttertoast.showToast(
-                                                                            msg: "Video deleted!",
-                                                                            toastLength: Toast.LENGTH_LONG,
-                                                                            gravity: ToastGravity.TOP,
-                                                                            backgroundColor: Colors.red,
-                                                                            textColor: Colors.white,
-                                                                            fontSize: 14.0,
-                                                                          );
-                                                                        });
+                                                        visible: challenge['activityDescription'] == '' ? false : true,
+                                                        child: Icon(CupertinoIcons.info, color: GGColors.primaryColor, size: 18)),
+                                                    SizedBox(width: 5),
+                                                    Expanded(
+                                                      child: Text(
+                                                        challenge['activityDescription'],
+                                                        style:
+                                                            TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: GGColors.secondarytextColor),
+                                                        textAlign: TextAlign.start,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  Visibility(
+                                                      visible: !challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
+                                                          userChallenges.any((uc) =>
+                                                              uc['challengeId'] == challenge.id && (uc['videoUrl'] != null || uc['excuse'] != null)),
+                                                      child: CupertinoButton(
+                                                        padding: EdgeInsets.zero,
+                                                        onPressed: () {
+                                                          showModalBottomSheet(
+                                                            context: context,
+                                                            builder: (BuildContext context) {
+                                                              return DeleteVideoBottomSheet(
+                                                                isExcuse: userChallenges
+                                                                    .any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null),
+                                                                onTap: () {
+                                                                  if (userChallenges
+                                                                      .any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null)) {
+                                                                    FirebaseFirestore.instance
+                                                                        .collection('users_challenges')
+                                                                        .doc(userChallenges.firstWhere((uc) => uc['challengeId'] == challenge.id).id)
+                                                                        .delete();
+                                                                    userChallenges.removeWhere((uc) => uc['challengeId'] == challenge.id);
+                                                                    Fluttertoast.showToast(
+                                                                      msg: "Excuse deleted!",
+                                                                      toastLength: Toast.LENGTH_LONG,
+                                                                      gravity: ToastGravity.TOP,
+                                                                      backgroundColor: Colors.red,
+                                                                      textColor: Colors.white,
+                                                                      fontSize: 14.0,
+                                                                    );
+                                                                    Navigator.pop(context);
+                                                                  } else {
+                                                                    _deleteChallenge(context, apiKey, userChallenges, challenge.id).then((value) {
+                                                                      Future.delayed(Duration(seconds: 1), () {
+                                                                        fetchUserChallenges(
+                                                                            arguments['groupId'], FirebaseAuth.instance.currentUser!.uid);
+                                                                        Fluttertoast.showToast(
+                                                                          msg: "Video deleted!",
+                                                                          toastLength: Toast.LENGTH_LONG,
+                                                                          gravity: ToastGravity.TOP,
+                                                                          backgroundColor: Colors.red,
+                                                                          textColor: Colors.white,
+                                                                          fontSize: 14.0,
+                                                                        );
                                                                       });
-                                                                    }
-                                                                  },
-                                                                );
-                                                              },
-                                                            );
-                                                          },
-                                                          child: Padding(
-                                                            padding: const EdgeInsets.only(top: 15),
-                                                            child: Container(
-                                                              height: 40,
-                                                              width: 40,
-                                                              decoration: BoxDecoration(
-                                                                color: Color.fromRGBO(80, 83, 91, 0.1),
-                                                                borderRadius: BorderRadius.circular(10),
-                                                              ),
-                                                              child: Padding(
-                                                                padding: const EdgeInsets.all(8.0),
-                                                                child: Center(
-                                                                  child: Icon(
-                                                                    CupertinoIcons.delete,
-                                                                    color: Color.fromRGBO(80, 83, 91, 1),
-                                                                  ),
+                                                                    });
+                                                                  }
+                                                                },
+                                                              );
+                                                            },
+                                                          );
+                                                        },
+                                                        child: Padding(
+                                                          padding: const EdgeInsets.only(top: 15),
+                                                          child: Container(
+                                                            height: 40,
+                                                            width: 40,
+                                                            decoration: BoxDecoration(
+                                                              color: Color.fromRGBO(80, 83, 91, 0.1),
+                                                              borderRadius: BorderRadius.circular(10),
+                                                            ),
+                                                            child: Padding(
+                                                              padding: const EdgeInsets.all(8.0),
+                                                              child: Center(
+                                                                child: Icon(
+                                                                  CupertinoIcons.delete,
+                                                                  color: Color.fromRGBO(80, 83, 91, 1),
                                                                 ),
                                                               ),
                                                             ),
                                                           ),
-                                                        )),
-                                                    Visibility(
-                                                      visible: (!userChallenges.any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] == null) &&
-                                                              !challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
-                                                              !challenge['startDateTime'].toDate().isAfter(DateTime.now())) ||
-                                                          (userChallenges.any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null) &&
-                                                              challenge['endDateTime'].toDate().isBefore(DateTime.now())),
-                                                      child: Expanded(
-                                                        child: CupertinoButton(
-                                                          pressedOpacity:
-                                                              (userChallenges.any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null))
-                                                                  ? 1
-                                                                  : 0.4,
-                                                          padding: EdgeInsets.only(
-                                                              left: userChallenges.any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null)
-                                                                  ? 10
-                                                                  : 0),
-                                                          borderRadius: BorderRadius.circular(10),
-                                                          onPressed: () async {
-                                                            if (!userChallenges.any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null)) {
-                                                              Navigator.pushNamed(context, '/GiveExcusePage', arguments: {
-                                                                'groupId': arguments['groupId'],
-                                                                'challengeId': challenge.id,
-                                                              }).then((value) {
-                                                                Future.delayed(Duration(seconds: 1), () {
-                                                                  fetchUserChallenges(arguments['groupId'], FirebaseAuth.instance.currentUser!.uid);
-                                                                });
+                                                        ),
+                                                      )),
+                                                  Visibility(
+                                                    visible:
+                                                        (!userChallenges.any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] == null) &&
+                                                                !challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
+                                                                !challenge['startDateTime'].toDate().isAfter(DateTime.now())) ||
+                                                            (userChallenges.any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null) &&
+                                                                challenge['endDateTime'].toDate().isBefore(DateTime.now())),
+                                                    child: Expanded(
+                                                      child: CupertinoButton(
+                                                        pressedOpacity:
+                                                            (userChallenges.any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null))
+                                                                ? 1
+                                                                : 0.4,
+                                                        padding: EdgeInsets.only(
+                                                            left:
+                                                                userChallenges.any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null)
+                                                                    ? 10
+                                                                    : 0),
+                                                        borderRadius: BorderRadius.circular(10),
+                                                        onPressed: () async {
+                                                          if (!userChallenges
+                                                              .any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null)) {
+                                                            Navigator.pushNamed(context, '/GiveExcusePage', arguments: {
+                                                              'groupId': arguments['groupId'],
+                                                              'challengeId': challenge.id,
+                                                            }).then((value) {
+                                                              Future.delayed(Duration(seconds: 1), () {
+                                                                fetchUserChallenges(arguments['groupId'], FirebaseAuth.instance.currentUser!.uid);
                                                               });
-                                                            }
-                                                          },
-                                                          child: Padding(
-                                                            padding: const EdgeInsets.only(top: 15),
-                                                            child: Container(
-                                                              height: 40,
-                                                              decoration: BoxDecoration(
-                                                                color: const Color.fromRGBO(255, 30, 0, 0.1),
-                                                                borderRadius: BorderRadius.circular(10),
-                                                              ),
-                                                              child: Padding(
-                                                                padding: const EdgeInsets.symmetric(horizontal: 15),
-                                                                child: Center(
-                                                                  child: Text(
-                                                                    (userChallenges.any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null))
-                                                                        ? 'Excuse sent: ' +
-                                                                            '${userChallenges.firstWhere((uc) => uc['challengeId'] == challenge.id)['excuse']}'
-                                                                        : 'Give Excuse',
-                                                                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 15),
-                                                                  ),
+                                                            });
+                                                          }
+                                                        },
+                                                        child: Padding(
+                                                          padding: const EdgeInsets.only(top: 15),
+                                                          child: Container(
+                                                            height: 40,
+                                                            decoration: BoxDecoration(
+                                                              color: const Color.fromRGBO(255, 30, 0, 0.1),
+                                                              borderRadius: BorderRadius.circular(10),
+                                                            ),
+                                                            child: Padding(
+                                                              padding: const EdgeInsets.symmetric(horizontal: 15),
+                                                              child: Center(
+                                                                child: Text(
+                                                                  (userChallenges
+                                                                          .any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null))
+                                                                      ? 'Excuse sent: ' +
+                                                                          '${userChallenges.firstWhere((uc) => uc['challengeId'] == challenge.id)['excuse']}'
+                                                                      : 'Give Excuse',
+                                                                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 15),
                                                                 ),
                                                               ),
                                                             ),
@@ -647,187 +695,188 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                                         ),
                                                       ),
                                                     ),
-                                                    Visibility(
-                                                      visible: (userChallenges.any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null))
-                                                          ? false
-                                                          : true,
-                                                      child: Expanded(
-                                                        child: CupertinoButton(
-                                                          pressedOpacity: userChallenges
-                                                                      .any((uc) => uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed') ||
-                                                                  (challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
-                                                                      !userChallenges.any((uc) => uc['challengeId'] == challenge.id)) ||
-                                                                  challenge['startDateTime'].toDate().isAfter(DateTime.now())
-                                                              ? 1
-                                                              : 0.4,
-                                                          padding: EdgeInsets.only(
-                                                              left: userChallenges.any(
-                                                                          (uc) => uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed') ||
-                                                                      (challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
-                                                                          !userChallenges.any((uc) => uc['challengeId'] == challenge.id)) ||
-                                                                      challenge['startDateTime'].toDate().isAfter(DateTime.now())
-                                                                  ? 0
-                                                                  : 10),
-                                                          onPressed: () async {
-                                                            if (challenge['startDateTime'].toDate().isAfter(DateTime.now())) {
-                                                              Fluttertoast.showToast(
-                                                                msg: "Challenge not started yet",
-                                                                toastLength: Toast.LENGTH_LONG,
-                                                                gravity: ToastGravity.TOP,
-                                                                backgroundColor: Colors.purple,
-                                                                textColor: Colors.white,
-                                                                fontSize: 14.0,
-                                                              );
-                                                            } else if (challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
-                                                                !userChallenges.any((uc) => uc['challengeId'] == challenge.id)) {
-                                                              Fluttertoast.showToast(
-                                                                msg: "You can no longer send a challenge",
-                                                                toastLength: Toast.LENGTH_LONG,
-                                                                gravity: ToastGravity.TOP,
-                                                                backgroundColor: Colors.grey,
-                                                                textColor: Colors.white,
-                                                                fontSize: 14.0,
-                                                              );
-                                                            } else if (userChallenges
-                                                                .any((uc) => uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed')) {
-                                                              return;
-                                                            } else if (challenge['videoUploadNeeded'] == 'No') {
-                                                              await FirebaseFirestore.instance.collection('users_challenges').add({
-                                                                'userId': FirebaseAuth.instance.currentUser!.uid,
-                                                                'groupId': arguments['groupId'],
-                                                                'challengeId': challenge.id,
-                                                                'status': 'marked_completed',
-                                                                'excuse': null,
-                                                                'videoUrl': null,
-                                                                'time': DateTime.now(),
-                                                              });
-                                  
-                                                              final docRef = FirebaseFirestore.instance
-                                                                  .collection('users_rankings')
-                                                                  .doc('${FirebaseAuth.instance.currentUser!.uid}_${arguments['groupId']}');
-                                                              final docSnapshot = await docRef.get();
-                                  
-                                                              if (docSnapshot.exists) {
-                                                                docRef.update({
-                                                                  "completedChallenges": FieldValue.increment(1), // Challenge totali completate
-                                                                  "streak": FieldValue.increment(1), // Numero di challenge completate di fila senza scuse
-                                                                }).then((value) {
-                                                                  Future.delayed(Duration(seconds: 1), () {
-                                                                    fetchUserChallenges(arguments['groupId'], FirebaseAuth.instance.currentUser!.uid);
-                                                                  });
-                                                                });
-                                                                ;
-                                                              } else {
-                                                                docRef.set({
-                                                                  "userId": FirebaseAuth.instance.currentUser!.uid,
-                                                                  "groupId": arguments['groupId'],
-                                                                  "completedChallenges": 1, // Prima challenge completata
-                                                                  "streak": 1, // Prima challenge completata di fila senza scuse
-                                                                }).then((value) {
-                                                                  Future.delayed(Duration(seconds: 1), () {
-                                                                    fetchUserChallenges(arguments['groupId'], FirebaseAuth.instance.currentUser!.uid);
-                                                                  });
-                                                                });
-                                                                ;
-                                                              }
-                                                            } else if (userChallenges.any((uc) => uc['challengeId'] == challenge.id)) {
-                                                              print(userChallenges.where((uc) => uc['challengeId'] == challenge.id).first['videoUrl']);
-                                  
-                                                              Navigator.of(context).push(MaterialPageRoute(
-                                                                builder: (context) => ShowVideoPage(
-                                                                    videoUrl: Uri.parse(
-                                                                        userChallenges.where((uc) => uc['challengeId'] == challenge.id).first['videoUrl'])),
-                                                              ));
-                                                            } else {
-                                                              Navigator.of(context)
-                                                                  .push(MaterialPageRoute(
-                                                                builder: (context) => UploadVideoPage(
-                                                                  idChallenge: challenge.id,
-                                                                  idGruppo: arguments['groupId'],
-                                                                ),
-                                                              ))
-                                                                  .then((value) {
+                                                  ),
+                                                  Visibility(
+                                                    visible: (userChallenges.any((uc) => uc['challengeId'] == challenge.id && uc['excuse'] != null))
+                                                        ? false
+                                                        : true,
+                                                    child: Expanded(
+                                                      child: CupertinoButton(
+                                                        pressedOpacity: userChallenges.any((uc) =>
+                                                                    uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed') ||
+                                                                (challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
+                                                                    !userChallenges.any((uc) => uc['challengeId'] == challenge.id)) ||
+                                                                challenge['startDateTime'].toDate().isAfter(DateTime.now())
+                                                            ? 1
+                                                            : 0.4,
+                                                        padding: EdgeInsets.only(
+                                                            left: userChallenges.any((uc) =>
+                                                                        uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed') ||
+                                                                    (challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
+                                                                        !userChallenges.any((uc) => uc['challengeId'] == challenge.id)) ||
+                                                                    challenge['startDateTime'].toDate().isAfter(DateTime.now())
+                                                                ? 0
+                                                                : 10),
+                                                        onPressed: () async {
+                                                          if (challenge['startDateTime'].toDate().isAfter(DateTime.now())) {
+                                                            Fluttertoast.showToast(
+                                                              msg: "Challenge not started yet",
+                                                              toastLength: Toast.LENGTH_LONG,
+                                                              gravity: ToastGravity.TOP,
+                                                              backgroundColor: Colors.purple,
+                                                              textColor: Colors.white,
+                                                              fontSize: 14.0,
+                                                            );
+                                                          } else if (challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
+                                                              !userChallenges.any((uc) => uc['challengeId'] == challenge.id)) {
+                                                            Fluttertoast.showToast(
+                                                              msg: "You can no longer send a challenge",
+                                                              toastLength: Toast.LENGTH_LONG,
+                                                              gravity: ToastGravity.TOP,
+                                                              backgroundColor: Colors.grey,
+                                                              textColor: Colors.white,
+                                                              fontSize: 14.0,
+                                                            );
+                                                          } else if (userChallenges
+                                                              .any((uc) => uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed')) {
+                                                            return;
+                                                          } else if (challenge['videoUploadNeeded'] == 'No') {
+                                                            await FirebaseFirestore.instance.collection('users_challenges').add({
+                                                              'userId': FirebaseAuth.instance.currentUser!.uid,
+                                                              'groupId': arguments['groupId'],
+                                                              'challengeId': challenge.id,
+                                                              'status': 'marked_completed',
+                                                              'excuse': null,
+                                                              'videoUrl': null,
+                                                              'time': DateTime.now(),
+                                                            });
+
+                                                            final docRef = FirebaseFirestore.instance
+                                                                .collection('users_rankings')
+                                                                .doc('${FirebaseAuth.instance.currentUser!.uid}_${arguments['groupId']}');
+                                                            final docSnapshot = await docRef.get();
+
+                                                            if (docSnapshot.exists) {
+                                                              docRef.update({
+                                                                "completedChallenges": FieldValue.increment(1), // Challenge totali completate
+                                                                "streak":
+                                                                    FieldValue.increment(1), // Numero di challenge completate di fila senza scuse
+                                                              }).then((value) {
                                                                 Future.delayed(Duration(seconds: 1), () {
                                                                   fetchUserChallenges(arguments['groupId'], FirebaseAuth.instance.currentUser!.uid);
                                                                 });
                                                               });
+                                                              ;
+                                                            } else {
+                                                              docRef.set({
+                                                                "userId": FirebaseAuth.instance.currentUser!.uid,
+                                                                "groupId": arguments['groupId'],
+                                                                "completedChallenges": 1, // Prima challenge completata
+                                                                "streak": 1, // Prima challenge completata di fila senza scuse
+                                                              }).then((value) {
+                                                                Future.delayed(Duration(seconds: 1), () {
+                                                                  fetchUserChallenges(arguments['groupId'], FirebaseAuth.instance.currentUser!.uid);
+                                                                });
+                                                              });
+                                                              ;
                                                             }
-                                                          },
-                                                          child: Padding(
-                                                            padding: const EdgeInsets.only(top: 15),
-                                                            child: Container(
-                                                              height: 40,
-                                                              decoration: BoxDecoration(
-                                                                color: userChallenges
-                                                                        .any((uc) => uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed')
-                                                                    ? Color.fromRGBO(6, 203, 154, 0.231)
-                                                                    : challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
-                                                                            !userChallenges.any((uc) => uc['challengeId'] == challenge.id)
-                                                                        ? const Color.fromARGB(45, 147, 147, 147)
-                                                                        : challenge['startDateTime'].toDate().isAfter(DateTime.now())
-                                                                            ? const Color.fromARGB(50, 163, 110, 243)
-                                                                            : challenge['videoUploadNeeded'] != 'No'
-                                                                                ? GGColors.primaryColor
-                                                                                : Color.fromRGBO(6, 203, 154, 1),
-                                                                borderRadius: BorderRadius.circular(10),
+                                                          } else if (userChallenges.any((uc) => uc['challengeId'] == challenge.id)) {
+                                                            print(userChallenges.where((uc) => uc['challengeId'] == challenge.id).first['videoUrl']);
+
+                                                            Navigator.of(context).push(MaterialPageRoute(
+                                                              builder: (context) => ShowVideoPage(
+                                                                  videoUrl: Uri.parse(userChallenges
+                                                                      .where((uc) => uc['challengeId'] == challenge.id)
+                                                                      .first['videoUrl'])),
+                                                            ));
+                                                          } else {
+                                                            Navigator.of(context)
+                                                                .push(MaterialPageRoute(
+                                                              builder: (context) => UploadVideoPage(
+                                                                idChallenge: challenge.id,
+                                                                idGruppo: arguments['groupId'],
                                                               ),
-                                                              child: Padding(
-                                                                padding: const EdgeInsets.symmetric(horizontal: 15),
-                                                                child: Center(
-                                                                  child: Text(
-                                                                    userChallenges.any(
-                                                                            (uc) => uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed')
-                                                                        ? 'Completed'
-                                                                        : challenge['startDateTime'].toDate().isAfter(DateTime.now())
-                                                                            ? 'Get ready to compete'
-                                                                            : challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
-                                                                                    !userChallenges.any((uc) => uc['challengeId'] == challenge.id)
-                                                                                ? 'Challenge not sent'
-                                                                                : challenge['videoUploadNeeded'] == 'No'
-                                                                                    ? 'Mark as Completed'
-                                                                                    : userChallenges.any((uc) => uc['challengeId'] == challenge.id)
-                                                                                        ? 'View Video'
-                                                                                        : 'Upload Video',
-                                                                    style: TextStyle(
-                                                                        color: userChallenges.any((uc) =>
-                                                                                uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed')
-                                                                            ? Color.fromRGBO(6, 203, 154, 1)
-                                                                            : challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
-                                                                                    !userChallenges.any((uc) => uc['challengeId'] == challenge.id)
-                                                                                ? Colors.black
-                                                                                : challenge['startDateTime'].toDate().isAfter(DateTime.now())
-                                                                                    ? Colors.purple
-                                                                                    : Colors.white,
-                                                                        fontWeight: FontWeight.bold,
-                                                                        fontSize: 15),
-                                                                  ),
+                                                            ))
+                                                                .then((value) {
+                                                              Future.delayed(Duration(seconds: 1), () {
+                                                                fetchUserChallenges(arguments['groupId'], FirebaseAuth.instance.currentUser!.uid);
+                                                              });
+                                                            });
+                                                          }
+                                                        },
+                                                        child: Padding(
+                                                          padding: const EdgeInsets.only(top: 15),
+                                                          child: Container(
+                                                            height: 40,
+                                                            decoration: BoxDecoration(
+                                                              color: userChallenges.any(
+                                                                      (uc) => uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed')
+                                                                  ? Color.fromRGBO(6, 203, 154, 0.231)
+                                                                  : challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
+                                                                          !userChallenges.any((uc) => uc['challengeId'] == challenge.id)
+                                                                      ? const Color.fromARGB(45, 147, 147, 147)
+                                                                      : challenge['startDateTime'].toDate().isAfter(DateTime.now())
+                                                                          ? const Color.fromARGB(50, 163, 110, 243)
+                                                                          : challenge['videoUploadNeeded'] != 'No'
+                                                                              ? GGColors.primaryColor
+                                                                              : Color.fromRGBO(6, 203, 154, 1),
+                                                              borderRadius: BorderRadius.circular(10),
+                                                            ),
+                                                            child: Padding(
+                                                              padding: const EdgeInsets.symmetric(horizontal: 15),
+                                                              child: Center(
+                                                                child: Text(
+                                                                  userChallenges.any((uc) =>
+                                                                          uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed')
+                                                                      ? 'Completed'
+                                                                      : challenge['startDateTime'].toDate().isAfter(DateTime.now())
+                                                                          ? 'Get ready to compete'
+                                                                          : challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
+                                                                                  !userChallenges.any((uc) => uc['challengeId'] == challenge.id)
+                                                                              ? 'Challenge not sent'
+                                                                              : challenge['videoUploadNeeded'] == 'No'
+                                                                                  ? 'Mark as Completed'
+                                                                                  : userChallenges.any((uc) => uc['challengeId'] == challenge.id)
+                                                                                      ? 'View Video'
+                                                                                      : 'Upload Video',
+                                                                  style: TextStyle(
+                                                                      color: userChallenges.any((uc) =>
+                                                                              uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed')
+                                                                          ? Color.fromRGBO(6, 203, 154, 1)
+                                                                          : challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
+                                                                                  !userChallenges.any((uc) => uc['challengeId'] == challenge.id)
+                                                                              ? Colors.black
+                                                                              : challenge['startDateTime'].toDate().isAfter(DateTime.now())
+                                                                                  ? Colors.purple
+                                                                                  : Colors.white,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      fontSize: 15),
                                                                 ),
                                                               ),
                                                             ),
                                                           ),
                                                         ),
                                                       ),
-                                                    )
-                                                  ],
-                                                ),
-                                                SizedBox(
-                                                  height: 15,
-                                                )
-                                              ],
-                                            ),
+                                                    ),
+                                                  )
+                                                ],
+                                              ),
+                                              SizedBox(
+                                                height: 15,
+                                              )
+                                            ],
                                           ),
                                         ),
-                                      );
-                                    },
-                                  ),
+                                      ),
+                                    );
+                                  },
                                 ),
-                                
-                              ],
-                            );
-                          },
-                        ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
-                    
+                    ),
                     ListView(
                         //physics: ClampingScrollPhysics(),
                         padding: EdgeInsets.all(16),
@@ -1034,6 +1083,7 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                 child: Image.asset(
                   'assets/images/logo.png',
                   fit: BoxFit.contain,
+                  
                 ),
               ),
             ),

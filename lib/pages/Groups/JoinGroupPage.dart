@@ -73,7 +73,6 @@ class _JoinGroupPageState extends State<JoinGroupPage> {
   @override
   Widget build(BuildContext context) {
     double keyboardHeight = MediaQuery.of(context).viewInsets.bottom; // Altezza tastiera
-    print(userGroupIds);
 
     return Scaffold(
         backgroundColor: GGColors.backgroundColor,
@@ -97,7 +96,7 @@ class _JoinGroupPageState extends State<JoinGroupPage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 20.0),
                     child: Text(
-                      'Joint a Private Group',
+                      'Join a Private Group',
                       style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 23),
                     ),
                   ),
@@ -276,23 +275,34 @@ class _JoinGroupPageState extends State<JoinGroupPage> {
                                   ),
                                   Flexible(
                                       child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
                                     children: [
                                       Container(
                                         width: GGSize.screenWidth(context) * 0.42,
                                         child: Padding(
                                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 7),
                                           child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.start,
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text(groupData['name'],
-                                                  style: TextStyle(fontWeight: FontWeight.bold, color: GGColors.primarytextColor, fontSize: 17)),
-                                              Text(
-                                                groupData['description'].length > 25
-                                                    ? '${groupData['description'].substring(0, 25)}...'
-                                                    : groupData['description'],
-                                                style: TextStyle(fontWeight: FontWeight.w600, color: GGColors.secondarytextColor, fontSize: 13),
-                                              ),
+                                              Container(
+                                                      //width: GGSize.screenWidth(context) * 0.4,
+                                                      child: Text(
+                                                        groupData['name'],
+                                                        style: TextStyle(fontWeight: FontWeight.bold, color: GGColors.primarytextColor, fontSize: 17),
+                                                        overflow: TextOverflow.ellipsis,
+                                                        maxLines: 1,
+                                                      ),
+                                                    ),
+                                              Container(
+                                                      //width: GGSize.screenWidth(context) * 0.4,
+                                                      child: Text(
+                                                        groupData['description'],
+                                                        style: TextStyle(fontWeight: FontWeight.w600, color: GGColors.secondarytextColor, fontSize: 13),
+                                                        overflow: TextOverflow.ellipsis,
+                                                        maxLines: 3,
+                                                      ),
+                                                    ),
                                             ],
                                           ),
                                         ),
