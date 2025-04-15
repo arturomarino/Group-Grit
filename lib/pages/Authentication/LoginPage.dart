@@ -286,10 +286,7 @@ class _LoginPageState extends State<LoginPage> {
 
                                       navigatorKey.currentState!.pushNamedAndRemoveUntil('/UsernamePage', (_) => false);
                                     } else {
-                                      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-                                        '/HomePage',
-                                        (_) => false,
-                                      );
+                                      navigatorKey.currentState!.pushNamedAndRemoveUntil('/HomePage', (_) => false);
                                     }
                                   }
                                 }),
@@ -302,8 +299,8 @@ class _LoginPageState extends State<LoginPage> {
                                       //CODICE CORRETTO PER SIGN IN WITH APPLE
                                       AuthService().signInWithApple().then((value) async {
                                         if (value != null) {
-                                          if (value.additionalUserInfo?.profile?['firstName'] == null ||
-                                              value.additionalUserInfo?.profile?['lastName'] == null) {
+                                          if (value.additionalUserInfo?.isNewUser == true && (value.additionalUserInfo?.profile?['firstName'] == null ||
+                                              value.additionalUserInfo?.profile?['lastName'] == null)) {
                                             navigatorKey.currentState!.pushNamedAndRemoveUntil('/DisplayNamePage', (_) => false);
                                             print(value.additionalUserInfo?.profile?['firstName']);
                                             print(value.additionalUserInfo?.profile?['lastName']);
@@ -362,10 +359,8 @@ class _LoginPageState extends State<LoginPage> {
 
                                             navigatorKey.currentState!.pushNamedAndRemoveUntil('/UsernamePage', (_) => false);
                                           } else {
-                                            Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-                                              '/HomePage',
-                                              (_) => false,
-                                            );
+                                            navigatorKey.currentState!.pushNamedAndRemoveUntil('/HomePage', (_) => false);
+                                            
                                           }
                                         }
                                       });

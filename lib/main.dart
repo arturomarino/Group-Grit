@@ -20,6 +20,7 @@ import 'package:group_grit/pages/Authentication/ForgotPasswordPage.dart';
 import 'package:group_grit/pages/Authentication/SignupPage.dart';
 import 'package:group_grit/pages/Authentication/UsernamePage.dart';
 import 'package:group_grit/pages/Chat/ChatPage.dart';
+import 'package:group_grit/pages/Groups/ChallengeDetailsPage.dart';
 import 'package:group_grit/pages/Groups/CreateChallenge.dart';
 import 'package:group_grit/pages/Groups/CreateGroupPage.dart';
 import 'package:group_grit/pages/Groups/EditGroupPage.dart';
@@ -300,7 +301,7 @@ class _MyAppState extends State<MyApp> {
                 '/JoinGroupPage': (context) => JoinGroupPage(),
                 '/MyGroupsPage': (context) => MyGroupsPage(),
                 '/GroupPage': (context) => GroupPage(),
-                '/UploadVideoPage': (context) => UploadVideoPage(idChallenge: '', idGruppo: ''),
+                '/UploadVideoPage': (context) => UploadVideoPage(idChallenge: '', idGruppo: '',nameChallenge: '',),
                 '/GiveExcusePage': (context) => GiveExcusePage(),
                 '/CreateChallengePage': (context) => CreateChallengePage(),
                 '/LanguagePage': (context) => LanguagePage(),
@@ -309,6 +310,7 @@ class _MyAppState extends State<MyApp> {
                     ),
                 '/DisplayNamePage': (context) => DisplayNamePage(),
                 '/VideoPlayerHorizontalPage': (context) => VideoPlayerHorizontalPage(videoUrl: '', imageUrl: '', controller: null,),
+                '/ChallengeDetailsPage': (context) => ChallengeDetailsPage(),
               },
             ));
   }

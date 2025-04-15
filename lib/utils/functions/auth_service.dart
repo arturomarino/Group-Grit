@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:group_grit/l10n/app_localizations.dart';
+import 'package:group_grit/main.dart';
 import 'package:group_grit/pages/Authentication/LoginPage.dart';
 import 'package:group_grit/pages/Authentication/UsernamePage.dart';
 import 'package:group_grit/pages/HomePage.dart';
@@ -150,10 +151,10 @@ class AuthService {
     }
   }
 
-  Future<void> signout({required BuildContext context}) async {
+  Future<void> signout() async {
     await FirebaseAuth.instance.signOut();
     await Future.delayed(const Duration(seconds: 1));
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => const LoginPage()));
+    navigatorKey.currentState!.pushNamedAndRemoveUntil('/LoginPage', (_) => false);
   }
 
   //REAUTHENTICATE USER

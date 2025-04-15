@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
@@ -13,6 +16,7 @@ import 'package:group_grit/utils/components/drawer.dart';
 import 'package:group_grit/utils/components/groupsButtons.dart';
 import 'package:group_grit/utils/constants/colors.dart';
 import 'package:group_grit/utils/constants/size.dart';
+import 'package:group_grit/utils/functions/Strava.dart' as Strava;
 import 'package:group_grit/utils/functions/auth_service.dart';
 import 'package:video_uploader/video_uploader.dart';
 
@@ -81,30 +85,6 @@ class _HomePageState extends State<HomePage> {
     return userDoc.exists && userDoc.data()?['username'] != null;
   }
 
-  /*void checkUsernameAndNavigate() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      final hasUsername = await this.hasUsername(uid);
-      if (!hasUsername && FirebaseAuth.instance.currentUser != null) {
-        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-          '/UsernamePage',
-          (_) => false,
-        );
-      }
-    }
-  }*/
-  /*Future<void> checkDisplayName() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (userDoc.exists && userDoc['display_name'] == '') {
-        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-          '/DisplayNamePage',
-          (_) => false,
-        );
-      }
-    }
-  }*/
   Future<bool> checkUserState() async {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
@@ -116,47 +96,46 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<String> getDeviceModel() async {
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    if (Platform.isAndroid) {
+      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      return androidInfo.model; // Es. "Pixel 4a"
+    } else if (Platform.isIOS) {
+      IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+      return iosInfo.utsname.machine; // Es. "iPhone13,4"
+    }
+    return 'Sconosciuto';
+  }
+
   void saveDeviceToken() async {
     if (FirebaseAuth.instance.currentUser?.uid == null || await checkUserState() == false) {
       return;
     } else {
-      final userTokensRef = db.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).collection('tokens');
+      final fcm = FirebaseMessaging.instance;
+      final token = await fcm.getToken();
+      if (token == null) return;
 
-      // 1️⃣ Recupera tutti i token attuali dell'utente dal database
-      final tokensSnapshot = await userTokensRef.get();
-      List<String> storedTokens = tokensSnapshot.docs.map((doc) => doc.id).toList();
+      final docRef = FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).collection('tokens').doc(token);
 
-      // 2️⃣ Ottieni il token attuale del dispositivo
-      final currentToken = await FirebaseMessaging.instance.getToken();
-      if (currentToken == null) return;
-
-      // 3️⃣ Controlla quali token sono ancora validi
-      List<String> validTokens = [];
-
-      for (String token in storedTokens) {
-        if (token == currentToken) {
-          validTokens.add(token);
-        } else {
-          bool isValid = await isTokenValid(token);
-          if (isValid) {
-            validTokens.add(token);
-          } else {
-            print("❌ Token non valido, rimosso: $token");
-            await userTokensRef.doc(token).delete(); // Rimuove il token non valido
-          }
-        }
-      }
-
-      // 4️⃣ Registra il token attuale se non è già presente
-      if (!validTokens.contains(currentToken)) {
-        print("✅ Nuovo token registrato: $currentToken");
-        await userTokensRef.doc(currentToken).set({'token': currentToken});
-      }
-
-      // 5️⃣ Ascolta il cambio di token e aggiorna
+      await docRef.set({
+        'token': token,
+        'platform': Platform.operatingSystem,
+        'version': Platform.operatingSystemVersion,
+        'device': await getDeviceModel(), // puoi usare device_info_plus se ti serve il nome specifico
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
+      // 4. Ascolta cambi di token
       FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-        print("🔄 Token aggiornato: $newToken");
-        await userTokensRef.doc(newToken).set({'token': newToken});
+        final newTokenRef = FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).collection('tokens').doc(newToken);
+
+        await newTokenRef.set({
+          'token': newToken,
+          'platform': Platform.operatingSystem,
+          'version': Platform.operatingSystemVersion,
+          'device': await getDeviceModel(), // puoi usare device_info_plus se ti serve il nome specifico
+          'lastUpdated': FieldValue.serverTimestamp(),
+        });
       });
     }
   }
@@ -175,8 +154,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
-
   @override
   void initState() {
     getDocument();
@@ -184,22 +161,36 @@ class _HomePageState extends State<HomePage> {
     // checkUsernameAndNavigate();
     saveDeviceToken();
     checkUserState();
+
     //checkDisplayName();
     super.initState();
   }
 
-Future<void> sendWelcomeEmail() async {
-  await FirebaseFirestore.instance.collection('emails').add({
-    'from': {
-      'email': 'noreply@groupgrit.io', // mittente verificato su MailerSend
-    },
-    'to': [
+  Future<void> sendWelcomeEmail() async {
+    await FirebaseFirestore.instance.collection('emails').add({
+      'from': {
+        'email': 'noreply@groupgrit.io', // mittente verificato su MailerSend
+      },
+      'to.*.email':'noreply@groupgrit.io',
+      'to': [
+        {
+          'email': 'arturo.marino04@gmail.com',
+        }
+      ],
+      'variables': [
       {
-        'email': 'arturo@groupgrit.io',
+        'email': 'arturo.marino04@gmail.com',
+        'substitutions': [
+          {
+            'var': 'variable',
+            'value': 'variable value'
+          }
+        ]
       }
     ],
-    'subject': 'Welcome to GroupGrit!',
-    'html': '''
+      'template_id': '0p7kx4x9d5e49yjr',
+      'subject': 'Welcome to GroupGrit!',
+      'html': '''
       <div style="font-family: Arial, sans-serif; padding: 20px;">
         <h2 style="color: #333;">🎉 Welcome to <span style="color: #000;">GroupGrit</span>!</h2>
         <p>Hello,</p>
@@ -213,14 +204,12 @@ Future<void> sendWelcomeEmail() async {
         <p style="margin-top: 30px;">See you soon,<br><strong>The GroupGrit Team</strong></p>
       </div>
     ''',
-  });
-}
-
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    print(GGSize.screenWidth(context) * 0.35);
     return Scaffold(
       drawerEnableOpenDragGesture: false,
       backgroundColor: GGColors.backgroundColor,
@@ -247,7 +236,8 @@ Future<void> sendWelcomeEmail() async {
                     ),
                     //Text("GroupGrit", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: GGColors.primaryColor)),
                     SizedBox(width: GGSize.screenWidth(context) * 0.025),
-                    /*GestureDetector(
+                    /*
+                    GestureDetector(
                       onTap: () {
                         sendWelcomeEmail();
                       },
@@ -276,7 +266,7 @@ Future<void> sendWelcomeEmail() async {
                           imageUrl:
                               "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/GroupGritContent%2FVideo-Preview.png?alt=media&token=e15b611c-6838-4cc2-96c2-a50b93eca0ba",
                           videoUrl:
-                              "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/GroupGritContent%2FSequence%2001.mp4?alt=media&token=1e5e2e69-a781-4d2e-adb0-e2de99cb5d0d", // <-- URL del video
+                              "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/GroupGritContent%2FSequence%2002.mp4?alt=media&token=1f8668c9-814f-4255-88d1-71dbd6b17719", // <-- URL del video
                         ),
                       ),
                     );

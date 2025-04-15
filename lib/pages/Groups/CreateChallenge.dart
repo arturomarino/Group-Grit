@@ -15,7 +15,7 @@ class CreateChallengePage extends StatefulWidget {
 
 class _CreateChallengePageState extends State<CreateChallengePage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  String dropdownValue = 'Yes';
+  String dropdownValue = 'Photo';
 
   final TextEditingController _challengeNameController = TextEditingController();
 
@@ -294,7 +294,7 @@ class _CreateChallengePageState extends State<CreateChallengePage> {
                       padding: const EdgeInsets.only(top: 15, bottom: 7),
                       child: Row(
                         children: [
-                          Text("Video upload Needed?", style: TextStyle(color: GGColors.primarytextColor, fontSize: 15, fontWeight: FontWeight.bold)),
+                          Text("Video Proof Needed", style: TextStyle(color: GGColors.primarytextColor, fontSize: 15, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -317,7 +317,7 @@ class _CreateChallengePageState extends State<CreateChallengePage> {
                                   width: GGSize.screenWidth(context) * 0.8,
                                   child: DropdownButton<String>(
                                     borderRadius: BorderRadius.circular(19),
-                                    dropdownColor: const Color.fromRGBO(181, 213, 255, 1),
+                                    dropdownColor: Colors.white,
                                     isExpanded: true,
                                     value: dropdownValue,
                                     elevation: 16,
@@ -325,17 +325,64 @@ class _CreateChallengePageState extends State<CreateChallengePage> {
                                     style: TextStyle(color: GGColors.primaryColor, fontWeight: FontWeight.w700),
                                     underline: Container(
                                       height: 0,
-                                      color: const Color.fromARGB(255, 155, 198, 255),
+                                      color: const Color.fromARGB(255, 255, 255, 255),
                                     ),
                                     onChanged: (String? newValue) {
-                                      setState(() {
-                                        dropdownValue = newValue!;
-                                      });
+                                      if (newValue == 'Apple Health') {
+                                        // Show a message or perform an action for Apple Health
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Apple Health option is coming soon!'),
+                                            backgroundColor: Colors.deepOrange,
+                                          ),
+                                        );
+                                      } else {
+                                        setState(() {
+                                          dropdownValue = newValue!;
+                                        });
+                                      }
                                     },
-                                    items: <String>['Yes', 'No'].map<DropdownMenuItem<String>>((String value) {
+                                    items: <String>['Photo', 'Video', 'Confirmation', 'Apple Health'].map<DropdownMenuItem<String>>((String value) {
                                       return DropdownMenuItem<String>(
                                         value: value,
-                                        child: Text(value),
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              value,
+                                              style: TextStyle(color: GGColors.primaryColor),
+                                            ),
+                                            Spacer(),
+                                            Visibility(
+                                              visible: value == 'Apple Health',
+                                              child: Stack(
+                                                children: [
+                                                  Container(
+                                                    width: GGSize.screenWidth(context) * 0.3,
+                                                    height: 25,
+                                                    decoration: BoxDecoration(
+                                                      gradient: LinearGradient(
+                                                        colors: [
+                                                          // azzurro
+                                                          Color.fromARGB(255, 188, 54, 255), // viola
+                                                          Color.fromARGB(255, 255, 8, 234),
+                                                        ],
+                                                        begin: Alignment.topLeft,
+                                                        end: Alignment.bottomRight,
+                                                      ),
+                                                      borderRadius: BorderRadius.circular(9),
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        'Coming Soon'.toUpperCase(),
+                                                        style: TextStyle(color: Colors.white),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       );
                                     }).toList(),
                                   ),
@@ -356,7 +403,8 @@ class _CreateChallengePageState extends State<CreateChallengePage> {
                       padding: const EdgeInsets.only(top: 20),
                       child: Row(
                         children: [
-                          Text("Challenge Description", style: TextStyle(color: GGColors.primarytextColor, fontSize: 15, fontWeight: FontWeight.bold)),
+                          Text("Challenge Description",
+                              style: TextStyle(color: GGColors.primarytextColor, fontSize: 15, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -455,7 +503,7 @@ class _CreateChallengePageState extends State<CreateChallengePage> {
                               'activityDescription': _challengeDescriptionController.text.trim(),
                               'startDateTime': startDateTime,
                               'endDateTime': endDateTime,
-                              'videoUploadNeeded': dropdownValue,
+                              'videoProofMode': dropdownValue,
                               'challengeId': challengeDoc.id,
                               'creatorId': FirebaseAuth.instance.currentUser!.uid,
                             });

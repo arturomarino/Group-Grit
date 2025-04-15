@@ -273,6 +273,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                   duration: const Duration(seconds: 1),
                                   backgroundColor: Colors.red,
                                 ));
+                                
                               } else if (fullNameController.text.isNotEmpty &&
                                   emailController.text.isNotEmpty &&
                                   password1Controller.text != password2Controller.text) {
@@ -331,6 +332,12 @@ class _SignUpPageState extends State<SignUpPage> {
                                       '/UsernamePage',
                                       (_) => false,
                                     );
+                                  }).onError((handleError, stackTrace) {
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                    
+                                    
                                   });
                                 }
                               }
@@ -433,6 +440,16 @@ class _SignUpPageState extends State<SignUpPage> {
                                       //CODICE CORRETTO PER SIGN IN WITH APPLE
                                       AuthService().signInWithApple().then((value) async {
                                         if (value != null) {
+                                          if (value.additionalUserInfo?.isNewUser == true && (value.additionalUserInfo?.profile?['firstName'] == null ||
+                                              value.additionalUserInfo?.profile?['lastName'] == null)) {
+                                            navigatorKey.currentState!.pushNamedAndRemoveUntil('/DisplayNamePage', (_) => false);
+                                            print(value.additionalUserInfo?.profile?['firstName']);
+                                            print(value.additionalUserInfo?.profile?['lastName']);
+                                            return;
+                                          }
+
+                                          print(value.additionalUserInfo?.profile?['firstName']);
+                                          print(value.additionalUserInfo?.profile?['lastName']);
                                           /*print('value user: ${value.additionalUserInfo?.profile?['lastName']}');
                                           print('value user: ${value.additionalUserInfo?.profile?['firstName']}');
                                           print('Firebase User: '+'${FirebaseAuth.instance.currentUser?.displayName}');*/
@@ -460,9 +477,12 @@ class _SignUpPageState extends State<SignUpPage> {
                                               FirebaseAuth.instance.currentUser?.displayName?.replaceAll(' ', '').toLowerCase() ?? 'user';
                                           final uniqueUsername = generateUniqueUsername(baseUsername, existingUsernames);
                                           //final valid = await accountExist("${FirebaseAuth.instance.currentUser?.email}");
-                                          if (value.additionalUserInfo?.isNewUser == true) {
+                                          if (value.additionalUserInfo?.isNewUser == true &&
+                                              value.additionalUserInfo?.profile?['firstName'] != null &&
+                                              value.additionalUserInfo?.profile?['lastName'] != null) {
                                             final user = {
-                                              'display_name': '${value.additionalUserInfo?.profile?['firstName']} ${value.additionalUserInfo?.profile?['lastName']}',
+                                              'display_name':
+                                                  '${value.additionalUserInfo?.profile?['firstName']} ${value.additionalUserInfo?.profile?['lastName']}',
                                               'email': FirebaseAuth.instance.currentUser!.email,
                                               'created_time': DateTime.now(),
                                               'uid': FirebaseAuth.instance.currentUser!.uid,

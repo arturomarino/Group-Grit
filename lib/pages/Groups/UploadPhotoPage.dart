@@ -5,127 +5,74 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:group_grit/pages/VideoUploadSystem/VideoPlayerWidget.dart';
 import 'package:group_grit/utils/constants/colors.dart';
 import 'package:group_grit/utils/constants/size.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_uploader/video_uploader.dart';
 import 'package:http/http.dart' as http;
 
-class UploadVideoPage extends StatefulWidget {
+class UploadPhotoPage extends StatefulWidget {
   final String idChallenge;
   final String idGruppo;
   final String nameChallenge;
 
-  UploadVideoPage({required this.idChallenge, required this.idGruppo, required this.nameChallenge});
+  UploadPhotoPage({required this.idChallenge, required this.idGruppo, required this.nameChallenge});
 
   @override
-  State<UploadVideoPage> createState() => _UploadVideoPageState();
+  State<UploadPhotoPage> createState() => _UploadPhotoPageState();
 }
 
-class _UploadVideoPageState extends State<UploadVideoPage> {
+class _UploadPhotoPageState extends State<UploadPhotoPage> {
   VideoPlayerController? controller;
 
-  var newVideoUrl = '';
+  var photoUrl = '';
 
-  File? _selectedVideo;
+  File? _selectedPhoto;
   bool _isUploading = false;
   String? _uploadStatus;
 
-  // API Key di api.video
-  final String apiKey = "PMl3yXT2E5vNGoZHCOSg9blvj6mW24DljopTRZaD38a";
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  // Seleziona un video dalla galleria
-  Future<File?> pickVideoFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.video, // Limita ai soli video
-    );
-    if (result == null) return null;
-
-    if (result != null && result.files.isNotEmpty) {
-      setState(() {
-        _selectedVideo = File(result.files.single.path!);
-        _uploadStatus = null;
-      });
-      return File(result.files.single.path!);
-    }
-  }
-
-  // Carica il video su api.video
-  Future<void> uploadVideo() async {
-    if (_selectedVideo == null) {
-      setState(() {
-        _uploadStatus = "No video selected";
-      });
-      return;
-    }
-
-    setState(() {
-      _isUploading = true;
-      _uploadStatus = null;
-    });
-
-    // Endpoint corretto
-    final String uploadUrl = "https://ws.api.video/videos";
-
+  Future<void> _pickPhoto() async {
     try {
-      // 1. Crea un nuovo video su api.video
-      final response = await http.post(
-        Uri.parse("https://ws.api.video/videos"),
-        headers: {
-          'Authorization': 'Bearer $apiKey',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          "title":
-              "videoFrom_${FirebaseAuth.instance.currentUser!.uid}_inGroup_${widget.idGruppo}_forChallenge_${widget.idChallenge}_${DateTime.now()}",
-        }),
-      );
+      final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
 
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        final String sourceUrl = "https://ws.api.video" + data['source']['uri'];
-
-        // 2. Carica il file video al link fornito
-        final uploadRequest = http.MultipartRequest("POST", Uri.parse(sourceUrl));
-        uploadRequest.headers['Authorization'] = 'Bearer $apiKey';
-        uploadRequest.files.add(
-          await http.MultipartFile.fromPath('file', _selectedVideo!.path),
-        );
-
-        final uploadResponse = await uploadRequest.send();
-        if (uploadResponse.statusCode == 201) {
-          final responseBody = await uploadResponse.stream.bytesToString();
-          final uploadData = jsonDecode(responseBody);
-          final videoUrl = uploadData['assets']['mp4'];
-
-          setState(() {
-            _uploadStatus = "Video uploaded successfully! URL: $videoUrl";
-            newVideoUrl = videoUrl;
-          });
-          print(_uploadStatus);
-        } else {
-          setState(() {
-            _uploadStatus = "Error loading video. Status: ${uploadResponse.statusCode}";
-          });
-        }
-      } else {
+      if (pickedFile != null) {
         setState(() {
-          _uploadStatus = "Error creating video: ${response.body}";
+          _selectedPhoto = File(pickedFile.path);
         });
       }
     } catch (e) {
-      print(e);
+      print("Error picking photo: $e");
+    }
+  }
+
+  Future<String?> _uploadPhotoToFirebase(File photo) async {
+    try {
       setState(() {
-        _uploadStatus = "Error: $e";
+        _isUploading = true;
       });
+      final fileName = '${FirebaseAuth.instance.currentUser!.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storageRef = FirebaseStorage.instance.ref().child('users_challenges_photo//$fileName');
+      final uploadTask = storageRef.putFile(photo);
+
+      final snapshot = await uploadTask.whenComplete(() {});
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      setState(() {
+        photoUrl = downloadUrl;
+      });
+
+      return downloadUrl;
+      
+    } catch (e) {
+      print("Error uploading photo: $e");
+      setState(() {
+        _isUploading = false;
+      });
+      return null;
     } finally {
       setState(() {
         _isUploading = false;
@@ -133,11 +80,15 @@ class _UploadVideoPageState extends State<UploadVideoPage> {
     }
   }
 
+  @override
+  void initState() {
+    super.initState();
+  }
+
   bool _showCircle = false;
 
   @override
   void dispose() {
-    controller?.dispose();
     super.dispose();
   }
 
@@ -191,33 +142,12 @@ class _UploadVideoPageState extends State<UploadVideoPage> {
                   Divider(),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 20),
-                    child:
-                        Text("Upload video", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
+                    child: Text("Upload Photo", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
                   ),
                   CupertinoButton(
                     padding: EdgeInsets.zero,
                     onPressed: () async {
-                      if (controller != null) {
-                        controller!.dispose(); // 🔥 Free controller
-                        setState(() {
-                          controller = null; // 🔥 Remove video from UI
-                        });
-                      }
-                      final file = await pickVideoFile();
-                      if (file == null) return null;
-
-                      controller = VideoPlayerController.file(file)
-                        ..addListener(() {
-                          if (mounted) {
-                            setState(() {}); // ✅ Verify that widget is until in the UI
-                          }
-                        })
-                        ..setLooping(true)
-                        ..initialize().then((_) {
-                          if (mounted) {
-                            controller!.play();
-                          }
-                        });
+                      _pickPhoto();
                     },
                     child: DottedBorder(
                       padding: EdgeInsets.zero,
@@ -228,7 +158,7 @@ class _UploadVideoPageState extends State<UploadVideoPage> {
                       strokeWidth: 1,
                       child: Container(
                           width: GGSize.screenWidth(context),
-                          height: _selectedVideo != null ? GGSize.screenHeight(context) * 0.08 : GGSize.screenHeight(context) * 0.5,
+                          height: _selectedPhoto != null ? GGSize.screenHeight(context) * 0.1 : GGSize.screenHeight(context) * 0.3,
                           decoration: BoxDecoration(color: const Color.fromARGB(54, 0, 103, 238), borderRadius: BorderRadius.circular(19)),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -236,11 +166,11 @@ class _UploadVideoPageState extends State<UploadVideoPage> {
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child:
-                                    Icon(_selectedVideo != null ? CupertinoIcons.refresh_bold : CupertinoIcons.share, color: GGColors.primaryColor),
+                                    Icon(_selectedPhoto != null ? CupertinoIcons.refresh_bold : CupertinoIcons.share, color: GGColors.primaryColor),
                               ),
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 15),
-                                child: Text(_selectedVideo != null && controller != null ? "Change Video" : "Tap to Select Video",
+                                child: Text(_selectedPhoto != null ? "Change Photo" : "Tap to Select Photo",
                                     style: TextStyle(color: GGColors.primaryColor, fontWeight: FontWeight.w600, fontSize: 16)),
                               ),
                             ],
@@ -248,17 +178,34 @@ class _UploadVideoPageState extends State<UploadVideoPage> {
                     ),
                   ),
                   SizedBox(height: 20),
-                  _selectedVideo != null
+                  _selectedPhoto != null
                       ? Column(
                           children: [
-                            if (_selectedVideo != null && controller != null)
+                            if (_selectedPhoto != null)
                               Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(19),
+                                  color: Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      spreadRadius: 2,
+                                      blurRadius: 5,
+                                      offset: Offset(0, 3), // changes position of shadow
+                                    ),
+                                  ],
+                                ),
                                 height: GGSize.screenHeight(context) * 0.45,
-                                child:
-                                    controller != null && controller!.value.isInitialized ? BasicOverlayWidget(controller: controller!) : Container(),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Image.file(
+                                    _selectedPhoto!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
                               )
                             else
-                              Text("No video selected"),
+                              Text("No Photo selected"),
                             SizedBox(height: 30),
                           ],
                         )
@@ -268,59 +215,68 @@ class _UploadVideoPageState extends State<UploadVideoPage> {
                     child: CupertinoButton(
                       padding: EdgeInsets.zero,
                       onPressed: () async {
-                        if (_selectedVideo != null) {
+                        if (_selectedPhoto != null) {
                           if (_isUploading) return;
+
 
                           setState(() {
                             _showCircle = true;
                           });
-                          uploadVideo().then((_) async {
+
+
+                          _uploadPhotoToFirebase(_selectedPhoto!).then((value)async {
+                            
+
                             await FirebaseFirestore.instance.collection('users_challenges').add({
-                              'userId': FirebaseAuth.instance.currentUser!.uid,
-                              'groupId': widget.idGruppo,
-                              'challengeId': widget.idChallenge,
-                              'status': 'video_success',
-                              'excuse': null,
-                              'videoUrl': newVideoUrl,
-                              'time': DateTime.now(),
-                            });
-
-                            final docRef = FirebaseFirestore.instance
-                                .collection('users_rankings')
-                                .doc('${FirebaseAuth.instance.currentUser!.uid}_${widget.idGruppo}');
-                            final docSnapshot = await docRef.get();
-
-                            if (docSnapshot.exists) {
-                              docRef.update({
-                                "completedChallenges": FieldValue.increment(1), // Challenge totali completate
-                                "streak": FieldValue.increment(1), // Numero di challenge completate di fila senza scuse
-                              });
-                            } else {
-                              docRef.set({
-                                "userId": FirebaseAuth.instance.currentUser!.uid,
-                                "groupId": widget.idGruppo,
-                                "completedChallenges": 1, // Prima challenge completata
-                                "streak": 1, // Prima challenge completata di fila senza scuse
-                              });
-                            }
-
-                            setState(() {
-                              _showCircle = false;
-                            });
-                            Navigator.pop(context, true);
+                            'userId': FirebaseAuth.instance.currentUser!.uid,
+                            'groupId': widget.idGruppo,
+                            'challengeId': widget.idChallenge,
+                            'status': 'photo_success',
+                            'excuse': null,
+                            'videoUrl': null,
+                            'photoUrl': value,
+                            'time': DateTime.now(),
                           });
+
+                          final docRef = FirebaseFirestore.instance
+                              .collection('users_rankings')
+                              .doc('${FirebaseAuth.instance.currentUser!.uid}_${widget.idGruppo}');
+                          final docSnapshot = await docRef.get();
+
+                          if (docSnapshot.exists) {
+                            docRef.update({
+                              "completedChallenges": FieldValue.increment(1), // Challenge totali completate
+                              "streak": FieldValue.increment(1), // Numero di challenge completate di fila senza scuse
+                            });
+                            
+                          } else {
+                            docRef.set({
+                              "userId": FirebaseAuth.instance.currentUser!.uid,
+                              "groupId": widget.idGruppo,
+                              "completedChallenges": 1, // Prima challenge completata
+                              "streak": 1, // Prima challenge completata di fila senza scuse
+                            });
+                          }
+
+                          setState(() {
+                            _showCircle = false;
+                          });
+                          Navigator.pop(context, true);
+
+                          });
+                          
                         }
                       },
                       child: Container(
                           width: GGSize.screenWidth(context),
                           height: GGSize.screenHeight(context) * 0.065,
                           decoration: BoxDecoration(
-                              color: _selectedVideo != null ? GGColors.primaryColor : GGColors.unselectedColor,
+                              color: _selectedPhoto != null ? GGColors.primaryColor : GGColors.unselectedColor,
                               borderRadius: BorderRadius.circular(21)),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text("Submit Video", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                              Text("Submit Photo", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
                               SizedBox(width: 10),
                               Visibility(
                                   visible: _showCircle,

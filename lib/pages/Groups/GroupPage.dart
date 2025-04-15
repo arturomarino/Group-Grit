@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +12,8 @@ import 'package:group_grit/pages/Groups/EditGroupPage.dart';
 import 'package:group_grit/pages/Groups/LeaderboardPage.dart';
 import 'package:group_grit/pages/Groups/MembersListPage.dart';
 import 'package:group_grit/pages/Groups/ShowVideoPage.dart';
+import 'package:group_grit/pages/Groups/UploadPhotoPage.dart';
+import 'package:group_grit/pages/Groups/ViewPhotoPage.dart';
 import 'package:group_grit/utils/components/myAppBar.dart';
 import 'package:group_grit/utils/constants/colors.dart';
 import 'package:group_grit/utils/constants/size.dart';
@@ -118,10 +121,10 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
       );
     }
   }
+
   Future<void> _getGroupDetails(String groupId) async {
     try {
-      DocumentSnapshot groupSnapshot =
-          await FirebaseFirestore.instance.collection('groups').doc(groupId).get();
+      DocumentSnapshot groupSnapshot = await FirebaseFirestore.instance.collection('groups').doc(groupId).get();
 
       if (groupSnapshot.exists) {
         setState(() {
@@ -299,13 +302,14 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                           groupId: arguments['groupId'],
                                           groupData: groupData!,
                                         ),
-                                      )).then((value) {
+                                      ))
+                                          .then((value) {
                                         _getGroupDetails(arguments['groupId']);
                                       });
                                     },
                                     child: Icon(CupertinoIcons.info, color: Colors.blue, size: 24),
                                   ),
-                                    Container(
+                                  Container(
                                     width: GGSize.screenWidth(context) * 0.4,
                                     child: Text(
                                       arguments['name'],
@@ -313,7 +317,7 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
                                     ),
-                                    ),
+                                  ),
                                   Spacer(),
                                   CupertinoButton(
                                     padding: EdgeInsets.zero,
@@ -536,6 +540,17 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                                       ),
                                                     ),
                                                     Spacer(),
+                                                    CupertinoButton(
+                                                        padding: EdgeInsets.zero,
+                                                        onPressed: () {
+                                                          Navigator.pushNamed(context, '/ChallengeDetailsPage', arguments: {
+                                                            'groupId': arguments['groupId'],
+                                                            'challengeId': challenge.id,
+                                                            'activityName': challenge['activityName'],
+                                                            'activityDescription': challenge['activityDescription'],
+                                                          });
+                                                        },
+                                                        child: Icon(CupertinoIcons.info, color: GGColors.primaryColor, size: 22))
                                                   ],
                                                 ),
                                               ),
@@ -549,9 +564,6 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                                 child: Row(
                                                   crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
-                                                    Visibility(
-                                                        visible: challenge['activityDescription'] == '' ? false : true,
-                                                        child: Icon(CupertinoIcons.info, color: GGColors.primaryColor, size: 18)),
                                                     SizedBox(width: 5),
                                                     Expanded(
                                                       child: Text(
@@ -569,7 +581,8 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                                   Visibility(
                                                       visible: !challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
                                                           userChallenges.any((uc) =>
-                                                              uc['challengeId'] == challenge.id && (uc['videoUrl'] != null || uc['excuse'] != null)),
+                                                              uc['challengeId'] == challenge.id &&
+                                                              (uc['videoUrl'] != null || uc['excuse'] != null || uc['photoUrl'] != null)),
                                                       child: CupertinoButton(
                                                         padding: EdgeInsets.zero,
                                                         onPressed: () {
@@ -595,6 +608,33 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                                                       textColor: Colors.white,
                                                                       fontSize: 14.0,
                                                                     );
+                                                                    Navigator.pop(context);
+                                                                  } else if (userChallenges
+                                                                      .any((uc) => uc['challengeId'] == challenge.id && uc['photoUrl'] != null)) {
+                                                                    FirebaseFirestore.instance
+                                                                        .collection('users_challenges')
+                                                                        .doc(userChallenges.firstWhere((uc) => uc['challengeId'] == challenge.id).id)
+                                                                        .delete();
+                                                                    FirebaseStorage.instance
+                                                                        .refFromURL(userChallenges
+                                                                            .firstWhere((uc) => uc['challengeId'] == challenge.id)['photoUrl'])
+                                                                        .delete()
+                                                                        .then((_) {
+                                                                      print("Photo deleted from Firebase Storage");
+                                                                    }).catchError((error) {
+                                                                      print("Error deleting photo: $error");
+                                                                    });
+                                                                    userChallenges.removeWhere((uc) => uc['challengeId'] == challenge.id);
+                                                                    Fluttertoast.showToast(
+                                                                      msg: "Excuse deleted!",
+                                                                      toastLength: Toast.LENGTH_LONG,
+                                                                      gravity: ToastGravity.TOP,
+                                                                      backgroundColor: Colors.red,
+                                                                      textColor: Colors.white,
+                                                                      fontSize: 14.0,
+                                                                    );
+
+                                                                    ///RIMUOVERE PHOTO DAL FIRE STORAGE
                                                                     Navigator.pop(context);
                                                                   } else {
                                                                     _deleteChallenge(context, apiKey, userChallenges, challenge.id).then((value) {
@@ -740,7 +780,7 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                                           } else if (userChallenges
                                                               .any((uc) => uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed')) {
                                                             return;
-                                                          } else if (challenge['videoUploadNeeded'] == 'No') {
+                                                          } else if (challenge['videoProofMode'] == 'Confirmation') {
                                                             await FirebaseFirestore.instance.collection('users_challenges').add({
                                                               'userId': FirebaseAuth.instance.currentUser!.uid,
                                                               'groupId': arguments['groupId'],
@@ -780,6 +820,25 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                                               });
                                                               ;
                                                             }
+                                                          } else if (challenge['videoProofMode'] == 'Photo') {
+                                                            print(Uri.parse(
+                                                                    userChallenges.where((uc) => uc['challengeId'] == challenge.id).first['photoUrl'])
+                                                                .toString());
+
+                                                            Navigator.of(context)
+                                                                .push(MaterialPageRoute(
+                                                              builder: (context) => ViewPhotoPage(
+                                                                photoUrl: Uri.parse(userChallenges
+                                                                        .where((uc) => uc['challengeId'] == challenge.id)
+                                                                        .first['photoUrl'])
+                                                                    .toString(),
+                                                              ),
+                                                            ))
+                                                                .then((value) {
+                                                              Future.delayed(Duration(seconds: 1), () {
+                                                                fetchUserChallenges(arguments['groupId'], FirebaseAuth.instance.currentUser!.uid);
+                                                              });
+                                                            });
                                                           } else if (userChallenges.any((uc) => uc['challengeId'] == challenge.id)) {
                                                             print(userChallenges.where((uc) => uc['challengeId'] == challenge.id).first['videoUrl']);
 
@@ -795,6 +854,7 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                                               builder: (context) => UploadVideoPage(
                                                                 idChallenge: challenge.id,
                                                                 idGruppo: arguments['groupId'],
+                                                                nameChallenge: challenge['activityName'],
                                                               ),
                                                             ))
                                                                 .then((value) {
@@ -817,7 +877,7 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                                                       ? const Color.fromARGB(45, 147, 147, 147)
                                                                       : challenge['startDateTime'].toDate().isAfter(DateTime.now())
                                                                           ? const Color.fromARGB(50, 163, 110, 243)
-                                                                          : challenge['videoUploadNeeded'] != 'No'
+                                                                          : challenge['videoProofMode'] != 'Confirmation'
                                                                               ? GGColors.primaryColor
                                                                               : Color.fromRGBO(6, 203, 154, 1),
                                                               borderRadius: BorderRadius.circular(10),
@@ -834,11 +894,15 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                                                           : challenge['endDateTime'].toDate().isBefore(DateTime.now()) &&
                                                                                   !userChallenges.any((uc) => uc['challengeId'] == challenge.id)
                                                                               ? 'Challenge not sent'
-                                                                              : challenge['videoUploadNeeded'] == 'No'
+                                                                              : challenge['videoProofMode'] == 'Confirmation'
                                                                                   ? 'Mark as Completed'
-                                                                                  : userChallenges.any((uc) => uc['challengeId'] == challenge.id)
-                                                                                      ? 'View Video'
-                                                                                      : 'Upload Video',
+                                                                                  : challenge['videoProofMode'] == 'Photo'
+                                                                                      ? userChallenges.any((uc) => uc['challengeId'] == challenge.id)
+                                                                                          ? 'View Photo'
+                                                                                          : 'Upload Photo'
+                                                                                      : userChallenges.any((uc) => uc['challengeId'] == challenge.id)
+                                                                                          ? 'View Video'
+                                                                                          : 'Upload Video',
                                                                   style: TextStyle(
                                                                       color: userChallenges.any((uc) =>
                                                                               uc['challengeId'] == challenge.id && uc['status'] == 'marked_completed')
@@ -928,7 +992,7 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                         child: Container(
                                           decoration: BoxDecoration(
                                             color: GGColors.buttonColor,
-                                            borderRadius: BorderRadius.circular(15),
+                                            borderRadius: BorderRadius.circular(19),
                                           ),
                                           child: Padding(
                                             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 16),
@@ -981,28 +1045,64 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                                           padding: const EdgeInsets.only(top: 5),
                                                           child: Row(
                                                             children: [
-                                                              Expanded(
-                                                                child: Text(
-                                                                  userChallenge['excuse'] != null
-                                                                      ? "Excuse: ${userChallenge['excuse']}"
-                                                                      : "Uploaded a video",
-                                                                  style: TextStyle(
-                                                                    fontSize: 13,
-                                                                    fontWeight: FontWeight.w600,
-                                                                    color: GGColors.secondarytextColor,
+                                                              Container(
+                                                                width: userChallenge['excuse'] != null
+                                                                    ? GGSize.screenWidth(context) * 0.5
+                                                                    : userChallenge['status'] == 'marked_completed'
+                                                                        ? GGSize.screenWidth(context) * 0.3
+                                                                        : GGSize.screenWidth(context) * 0.35,
+                                                                height: 25,
+                                                                decoration: BoxDecoration(
+                                                                  color: userChallenge['excuse'] != null
+                                                                      ? Color.fromRGBO(255, 30, 0, 0.1)
+                                                                      : userChallenge['status'] == 'marked_completed'
+                                                                          ? Color.fromRGBO(6, 203, 154, 1)
+                                                                          : const Color.fromARGB(255, 101, 164, 246),
+                                                                  borderRadius: BorderRadius.circular(15),
+                                                                ),
+                                                                child: Center(
+                                                                  child: Text(
+                                                                    (userChallenge['excuse'] != null
+                                                                        ? "Excuse: ${userChallenge['excuse']}"
+                                                                        : userChallenge['status'] == 'marked_completed'
+                                                                          ? "Completed"
+                                                                          : userChallenge['status'] == 'photo_success'
+                                                                            ? "Uploaded a photo"
+                                                                            : "Uploaded a video")
+                                                                      .toUpperCase(),
+                                                                    style: TextStyle(
+                                                                      fontSize: 12,
+                                                                      fontWeight: FontWeight.w700,
+                                                                      color: userChallenge['excuse'] != null
+                                                                          ? Colors.red
+                                                                          : userChallenge['status'] == 'marked_completed'
+                                                                              ? Colors.white
+                                                                              : Colors.white,
+                                                                    ),
+                                                                    overflow: TextOverflow.ellipsis,
+                                                                    maxLines: 2,
                                                                   ),
-                                                                  overflow: TextOverflow.ellipsis,
-                                                                  maxLines: 2,
                                                                 ),
                                                               ),
+                                                              Spacer(),
                                                               Visibility(
-                                                                visible: userChallenge['excuse'] == null,
+                                                                visible: (userChallenge['excuse'] == null && userChallenge['videoUrl'] != null) || 
+                                                                    userChallenge['status'] == 'photo_success',
                                                                 child: GestureDetector(
                                                                   onTap: () {
-                                                                    Navigator.of(context).push(MaterialPageRoute(
+                                                                    if(userChallenge['status'] == 'photo_success'){
+                                                                      Navigator.of(context).push(MaterialPageRoute(
+                                                                      builder: (context) =>
+                                                                          ViewPhotoPage(photoUrl: userChallenge['photoUrl'].toString()),
+                                                                    ));
+                                                                    }else{
+                                                                      Navigator.of(context).push(MaterialPageRoute(
                                                                       builder: (context) =>
                                                                           ShowVideoPage(videoUrl: Uri.parse(userChallenge['videoUrl'])),
                                                                     ));
+
+                                                                    }
+                                                                    
                                                                   },
                                                                   child: Padding(
                                                                     padding: const EdgeInsets.only(top: 0),
@@ -1010,9 +1110,9 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                                                       radius: 12,
                                                                       backgroundColor: GGColors.primaryColor,
                                                                       child: Padding(
-                                                                        padding: const EdgeInsets.only(left: 2),
+                                                                        padding:  EdgeInsets.only(left: userChallenge['status'] == 'photo_success'?0:2),
                                                                         child: Icon(
-                                                                          CupertinoIcons.play_fill,
+                                                                         userChallenge['status'] == 'photo_success'?CupertinoIcons.camera_fill: CupertinoIcons.play_fill,
                                                                           size: 14,
                                                                           color: Colors.white,
                                                                         ),
@@ -1083,7 +1183,6 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                 child: Image.asset(
                   'assets/images/logo.png',
                   fit: BoxFit.contain,
-                  
                 ),
               ),
             ),

@@ -14,6 +14,7 @@ import 'package:group_grit/pages/User/ProfilePage.dart';
 import 'package:group_grit/utils/constants/colors.dart';
 import 'package:group_grit/utils/constants/size.dart';
 import 'package:group_grit/utils/functions/AnalyticsEngine.dart';
+import 'package:group_grit/utils/functions/Strava.dart' as Strava;
 import 'package:group_grit/utils/functions/auth_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -26,6 +27,7 @@ class MyDrawer extends StatefulWidget {
 class _MyDrawerState extends State<MyDrawer> {
   final docRef = FirebaseFirestore.instance.collection("users").doc("${FirebaseAuth.instance.currentUser!.uid}");
   final _remoteConfig = FirebaseRemoteConfig.instance;
+  bool stravaConnected = false;
 
   final Map<String, dynamic> user = {};
   void getDocument() {
@@ -47,6 +49,17 @@ class _MyDrawerState extends State<MyDrawer> {
         'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/user_photos%2FcNhA32GBUteczS4u9yThwf4KAaC3%2FprofilePage?alt=media&token=2788526e-2e95-45a0-86ab-ec9743546c47');
     getDocument();
     _initRemoteConfig();
+    Strava.isUserAuthenticated().then((isAuthenticated) {
+      if (isAuthenticated) {
+        setState(() {
+          stravaConnected = true;
+        });
+      } else {
+        setState(() {
+          stravaConnected = false;
+        });
+      }
+    });
   }
 
   _initRemoteConfig() async {
@@ -98,7 +111,10 @@ class _MyDrawerState extends State<MyDrawer> {
                   ],
                 ),
               ),
-              Divider(),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30),
+                child: Divider(),
+              ),
               Column(
                 children: [
                   SizedBox(height: GGSize.screenHeight(context) * 0.04),
@@ -160,6 +176,33 @@ class _MyDrawerState extends State<MyDrawer> {
                       });
                     },
                   ),
+                  /*
+                  ListTile(
+                    leading: CircleAvatar(
+                        radius: 25,
+                        backgroundColor:stravaConnected==true ? const Color.fromARGB(255, 149, 249, 152): const Color.fromARGB(109, 246, 148, 91),
+                        child: Icon(
+                          FontAwesomeIcons.strava,
+                          size: 27,
+                          color:stravaConnected==true ? Colors.green: Colors.orange,
+                        )),
+                    title: Text(
+                      stravaConnected==true ? 'Connected' : 'Connect Strava',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: stravaConnected==true ?  Colors.green : Colors.orange,
+                      ),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      if (stravaConnected==true) {
+                        await Strava.disconnectFromStrava();
+                      } else {
+                        await Strava.authenticateWithStrava();
+                      }
+                    },
+                  ),*/
                   ListTile(
                     leading: CircleAvatar(
                         radius: 25,
@@ -191,7 +234,7 @@ class _MyDrawerState extends State<MyDrawer> {
                             await tokenRef.doc(tokenDoc.id).delete();
                           }
                         }
-                        await AuthService().signout(context: context);
+                        await AuthService().signout();
                       },
                       child: Container(
                           width: GGSize.screenWidth(context) * 0.8,
@@ -290,7 +333,7 @@ class SupportModal extends StatelessWidget {
                 ),
                 SizedBox(height: 10),
                 Text(
-                  'Version 1.0.0',
+                  'Version 1.0.1',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black),
                 ),
               ],

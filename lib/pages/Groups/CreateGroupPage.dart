@@ -29,7 +29,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> with SingleTickerProv
   String _groupName = '';
   String _groupDescription = '';
   String privacyDropdownValue = 'Private';
-  String rulesDropDownValue = 'Missing 2 Challenges in a row';
+  String rulesDropDownValue ='Another Rules';
 
   XFile? _image;
 
@@ -317,7 +317,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> with SingleTickerProv
                                         rulesDropDownValue = newValue!;
                                       });
                                     },
-                                    items: <String>['Missing 2 Challenges in a row', 'Another Rules'].map<DropdownMenuItem<String>>((String value) {
+                                    items: <String>['Another Rules','Missing 2 Challenges in a row'].map<DropdownMenuItem<String>>((String value) {
                                       return DropdownMenuItem<String>(
                                         value: value,
                                         child: Text(value),
