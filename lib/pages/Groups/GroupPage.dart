@@ -820,25 +820,41 @@ class _GroupPageState extends State<GroupPage> with TickerProviderStateMixin {
                                                               });
                                                               ;
                                                             }
-                                                          } else if (challenge['videoProofMode'] == 'Photo') {
-                                                            print(Uri.parse(
-                                                                    userChallenges.where((uc) => uc['challengeId'] == challenge.id).first['photoUrl'])
+                                                            } else if (challenge['videoProofMode'] == 'Photo') {
+                                                            if (userChallenges.any((uc) => uc['challengeId'] == challenge.id)) {
+                                                              print(Uri.parse(
+                                                                  userChallenges.where((uc) => uc['challengeId'] == challenge.id).first['photoUrl'])
                                                                 .toString());
 
-                                                            Navigator.of(context)
+                                                              Navigator.of(context)
                                                                 .push(MaterialPageRoute(
                                                               builder: (context) => ViewPhotoPage(
                                                                 photoUrl: Uri.parse(userChallenges
-                                                                        .where((uc) => uc['challengeId'] == challenge.id)
-                                                                        .first['photoUrl'])
-                                                                    .toString(),
+                                                                    .where((uc) => uc['challengeId'] == challenge.id)
+                                                                    .first['photoUrl'])
+                                                                  .toString(),
                                                               ),
-                                                            ))
+                                                              ))
                                                                 .then((value) {
                                                               Future.delayed(Duration(seconds: 1), () {
                                                                 fetchUserChallenges(arguments['groupId'], FirebaseAuth.instance.currentUser!.uid);
                                                               });
-                                                            });
+                                                              });
+                                                            } else {
+                                                              Navigator.of(context)
+                                                                  .push(MaterialPageRoute(
+                                                                builder: (context) => UploadPhotoPage(
+                                                                  idChallenge: challenge.id,
+                                                                  idGruppo: arguments['groupId'],
+                                                                  nameChallenge: challenge['activityName'],
+                                                                ),
+                                                              ))
+                                                                  .then((value) {
+                                                                Future.delayed(Duration(seconds: 1), () {
+                                                                  fetchUserChallenges(arguments['groupId'], FirebaseAuth.instance.currentUser!.uid);
+                                                                });
+                                                              });
+                                                            }
                                                           } else if (userChallenges.any((uc) => uc['challengeId'] == challenge.id)) {
                                                             print(userChallenges.where((uc) => uc['challengeId'] == challenge.id).first['videoUrl']);
 
