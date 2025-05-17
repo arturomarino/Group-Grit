@@ -58,7 +58,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         body: ListView(physics: BouncingScrollPhysics(), children: [
           ProfileWidget(
-            imagePath: user['photo_url'] ??'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede',
+            imagePath: user['photo_url'] ??'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=$API',
             onClicked: () async {
               final result = await Navigator.of(context)
                   .push(
