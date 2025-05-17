@@ -302,7 +302,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                       'created_time': DateTime.now(),
                                       'uid': FirebaseAuth.instance.currentUser!.uid,
                                       'photo_url':
-                                          'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede',
+                                          'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token==$API',
                                     };
                                     await db
                                         .collection('users')
@@ -310,14 +310,14 @@ class _SignUpPageState extends State<SignUpPage> {
                                         .set(user)
                                         .onError((e, _) => print("Error writing document: $e"));
                                     await FirebaseAuth.instance.currentUser?.updatePhotoURL(
-                                        'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede');
+                                        'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=$API');
 
                                     final storageRef = FirebaseStorage.instance.ref();
                                     final profilePicRef = storageRef.child("user_photos/${FirebaseAuth.instance.currentUser!.uid}/profilePage");
 
                                     try {
                                       await profilePicRef.putFile(File(
-                                          'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede'));
+                                          'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=$API'));
                                       final photoUrl = await profilePicRef.getDownloadURL();
                                       await FirebaseAuth.instance.currentUser?.updatePhotoURL(photoUrl);
                                       user['photo_url'] = photoUrl;
@@ -487,11 +487,11 @@ class _SignUpPageState extends State<SignUpPage> {
                                               'created_time': DateTime.now(),
                                               'uid': FirebaseAuth.instance.currentUser!.uid,
                                               'photo_url':
-                                                  'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede',
+                                                  'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=$API',
                                               'username': uniqueUsername,
                                             };
                                             await FirebaseAuth.instance.currentUser?.updatePhotoURL(
-                                                'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede');
+                                                'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=$API');
                                             await db
                                                 .collection('users')
                                                 .doc(FirebaseAuth.instance.currentUser!.uid)
