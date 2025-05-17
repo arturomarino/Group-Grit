@@ -291,7 +291,7 @@ class _UsernamePageState extends State<UsernamePage> {
                                     _isLoading = true;
                                   });
                                   await FirebaseAuth.instance.currentUser?.updatePhotoURL(
-                                      'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede');
+                                      'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=$API');
                                   FirebaseFirestore.instance
                                       .collection('users')
                                       .doc(FirebaseAuth.instance.currentUser!.uid)
