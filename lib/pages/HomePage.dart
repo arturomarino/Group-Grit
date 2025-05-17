@@ -263,9 +263,9 @@ class _HomePageState extends State<HomePage> {
                       MaterialPageRoute(
                         builder: (context) => VideoPlayerPage(
                           imageUrl:
-                              "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/GroupGritContent%2FVideo-Preview.png?alt=media&token=e15b611c-6838-4cc2-96c2-a50b93eca0ba",
+                              "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/GroupGritContent%2FVideo-Preview.png?alt=media&token=$API",
                           videoUrl:
-                              "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/GroupGritContent%2FSequence%2002.mp4?alt=media&token=1f8668c9-814f-4255-88d1-71dbd6b17719", // <-- URL del video
+                              "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/GroupGritContent%2FSequence%2002.mp4?alt=media&token=$API", // <-- URL del video
                         ),
                       ),
                     );
@@ -283,7 +283,7 @@ class _HomePageState extends State<HomePage> {
                               color: Color.fromRGBO(234, 234, 234, 1),
                               image: DecorationImage(
                                 image: CachedNetworkImageProvider(
-                                    "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/GroupGritContent%2FVideo-Preview.png?alt=media&token=e15b611c-6838-4cc2-96c2-a50b93eca0ba"),
+                                    "https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/GroupGritContent%2FVideo-Preview.png?alt=media&token=$API"),
                                 fit: BoxFit.fitHeight,
                               ),
                               borderRadius: BorderRadius.circular(16),
