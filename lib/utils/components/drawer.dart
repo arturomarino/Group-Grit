@@ -45,7 +45,7 @@ class _MyDrawerState extends State<MyDrawer> {
   initState() {
     super.initState();
     FirebaseAuth.instance.currentUser!.updatePhotoURL(
-        'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/user_photos%2FcNhA32GBUteczS4u9yThwf4KAaC3%2FprofilePage?alt=media&token=2788526e-2e95-45a0-86ab-ec9743546c47');
+        'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/user_photos%2FcNhA32GBUteczS4u9yThwf4KAaC3%2FprofilePage?alt=media&token=$API');
     getDocument();
     _initRemoteConfig();
   }
@@ -113,7 +113,7 @@ class _MyDrawerState extends State<MyDrawer> {
                       child: ClipOval(
                         child: CachedNetworkImage(
                           imageUrl: user['photo_url'] ??
-                              'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede', // Evita null e rende l'URL univoco
+                              'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=$API', // Evita null e rende l'URL univoco
                           fit: BoxFit.cover,
                           width: 50,
                           height: 50,
