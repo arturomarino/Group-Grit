@@ -16,7 +16,6 @@ import 'package:group_grit/utils/components/drawer.dart';
 import 'package:group_grit/utils/components/groupsButtons.dart';
 import 'package:group_grit/utils/constants/colors.dart';
 import 'package:group_grit/utils/constants/size.dart';
-import 'package:group_grit/utils/functions/Strava.dart' as Strava;
 import 'package:group_grit/utils/functions/auth_service.dart';
 import 'package:video_uploader/video_uploader.dart';
 

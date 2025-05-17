@@ -54,7 +54,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               height: GGSize.screenHeight(context) * 0.05,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
+                  backgroundColor: GGColors.primaryColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(13.0),
                   ),
@@ -72,7 +72,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     );
                   });
                 },
-                child: Text('Send reset email', style: TextStyle(color: Colors.black)),
+                child: Text('Send reset email', style: TextStyle(color: Colors.white, fontSize: 16.0, fontWeight: FontWeight.bold)),
               ),
             ),
           ],

@@ -14,7 +14,6 @@ import 'package:group_grit/pages/User/ProfilePage.dart';
 import 'package:group_grit/utils/constants/colors.dart';
 import 'package:group_grit/utils/constants/size.dart';
 import 'package:group_grit/utils/functions/AnalyticsEngine.dart';
-import 'package:group_grit/utils/functions/Strava.dart' as Strava;
 import 'package:group_grit/utils/functions/auth_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -49,17 +48,6 @@ class _MyDrawerState extends State<MyDrawer> {
         'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/user_photos%2FcNhA32GBUteczS4u9yThwf4KAaC3%2FprofilePage?alt=media&token=2788526e-2e95-45a0-86ab-ec9743546c47');
     getDocument();
     _initRemoteConfig();
-    Strava.isUserAuthenticated().then((isAuthenticated) {
-      if (isAuthenticated) {
-        setState(() {
-          stravaConnected = true;
-        });
-      } else {
-        setState(() {
-          stravaConnected = false;
-        });
-      }
-    });
   }
 
   _initRemoteConfig() async {
@@ -234,7 +222,9 @@ class _MyDrawerState extends State<MyDrawer> {
                             await tokenRef.doc(tokenDoc.id).delete();
                           }
                         }
-                        await AuthService().signout();
+                        AuthService().signout();
+                        
+                        
                       },
                       child: Container(
                           width: GGSize.screenWidth(context) * 0.8,

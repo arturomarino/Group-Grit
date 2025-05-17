@@ -77,9 +77,9 @@ class AuthService {
     final loc = AppLocalizations.of(context)!;
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
-      showDialog(context: context, builder: (context) => const Center(child: CircularProgressIndicator()));
-      await Future.delayed(const Duration(seconds: 1));
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => HomePage()));
+      //showDialog(context: context, builder: (context) => const Center(child: CircularProgressIndicator()));
+      //await Future.delayed(const Duration(seconds: 1));
+      //Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => HomePage()));
     } on FirebaseAuthException catch (e) {
       //All possibile errors that can be thrown by FirebaseAuth
       print(e.code);
@@ -152,9 +152,11 @@ class AuthService {
   }
 
   Future<void> signout() async {
-    await FirebaseAuth.instance.signOut();
-    await Future.delayed(const Duration(seconds: 1));
-    navigatorKey.currentState!.pushNamedAndRemoveUntil('/LoginPage', (_) => false);
+    await FirebaseAuth.instance.signOut().then((_) async {
+      //navigatorKey.currentState!.pushNamedAndRemoveUntil('/LoginPage', (_) => false);
+      print('User signed out');
+      
+    });
   }
 
   //REAUTHENTICATE USER

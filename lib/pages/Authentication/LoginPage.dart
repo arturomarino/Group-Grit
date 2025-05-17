@@ -28,6 +28,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   FirebaseFirestore db = FirebaseFirestore.instance;
   Mixpanel? mixpanel;
+  bool _isLoading = false;
 
   Future<bool> accountExist(String email) async {
     print("Verifying if the email: $email exists in the database...");
@@ -214,15 +215,37 @@ class _LoginPageState extends State<LoginPage> {
                             padding: EdgeInsets.zero,
                             onPressed: () async {
                               //mixpanel!.track('_signIn');
+                              setState(() {
+                                _isLoading = true;
+                              });
                               final packageInfo = await PackageInfo.fromPlatform();
                               mixpanel?.track("Prova", properties: {"version": packageInfo.version});
-                              await AuthService().signin(email: emailController.text, password: passwordController.text, context: context);
+                              await AuthService().signin(email: emailController.text, password: passwordController.text, context: context).then((value){
+                                setState(() {
+                                  _isLoading = false;
+                                });
+                              });
                             },
                             child: Container(
                               width: screenWidth,
                               height: screenHeight * 0.065,
                               decoration: BoxDecoration(color: GGColors.primaryColor, borderRadius: BorderRadius.circular(21)),
-                              child: Center(child: Text("Sign In", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18))),
+                              child:  Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text("Sign In", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                                  SizedBox(width: 10),
+                                  Visibility(
+                                      visible: _isLoading == true ? true : false,
+                                      child: SizedBox(
+                                          width: 15,
+                                          height: 15,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          )))
+                                ],
+                              ),
                             ),
                           ),
                         ),
