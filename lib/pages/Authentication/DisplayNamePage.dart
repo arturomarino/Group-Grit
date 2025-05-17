@@ -195,11 +195,11 @@ class _UsernamePageState extends State<DisplayNamePage> {
                                   'created_time': DateTime.now(),
                                   'uid': FirebaseAuth.instance.currentUser!.uid,
                                   'photo_url':
-                                      'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede',
+                                      'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=$API',
                                   'username': uniqueUsername,
                                 };
                                 await FirebaseAuth.instance.currentUser?.updatePhotoURL(
-                                    'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=c3b38564-1579-4440-8da4-410950dfeede');
+                                    'https://firebasestorage.googleapis.com/v0/b/group-grit-app.firebasestorage.app/o/standartProfilePage.avif?alt=media&token=$API');
                                 await db
                                     .collection('users')
                                     .doc(FirebaseAuth.instance.currentUser!.uid)
