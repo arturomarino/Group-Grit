@@ -35,7 +35,7 @@ class _UploadVideoPageState extends State<UploadVideoPage> {
   String? _uploadStatus;
 
   // API Key di api.video
-  final String apiKey = "PMl3yXT2E5vNGoZHCOSg9blvj6mW24DljopTRZaD38a";
+  final String apiKey = "$API";
 
   @override
   void initState() {
@@ -73,7 +73,7 @@ class _UploadVideoPageState extends State<UploadVideoPage> {
     });
 
     // Endpoint corretto
-    final String uploadUrl = "https://ws.api.video/videos";
+    final String uploadUrl = "https://ws..video/videos";
 
     try {
       // 1. Crea un nuovo video su api.video
